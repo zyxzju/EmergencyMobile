@@ -16,6 +16,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 // --------登录、注册、修改密码、位置选择、个人信息维护 [熊佳臻]----------------
 //登录
 .controller('SignInCtrl',['$state','$scope',function($state,$scope){
+  $scope.account = {username:'',password:''};
   $scope.toRegister = function(){
     $state.go('register');
   }
