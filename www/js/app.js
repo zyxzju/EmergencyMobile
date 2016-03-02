@@ -46,6 +46,11 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       url:'/register',
       templateUrl:'templates/signIn/register.html',
       controller:'RegisterCtrl'
+    })
+    .state('location',{
+      url:'/location',
+      templateUrl:'templates/signIn/location.html',
+      controller:'LocationCtrl'
     });
 
   //急救人员与分流人员
@@ -125,12 +130,12 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       views:{
        'mine':{
           templateUrl: 'templates/mine/setting.html',
-          // controller:'ambulancePatientCtrl'
+          controller:'SettingCtrl'
         }
       }
     });
 
     //起始页
-    $urlRouterProvider.otherwise('/ambulance/list');
+    $urlRouterProvider.otherwise('/signIn');
   }])
 
