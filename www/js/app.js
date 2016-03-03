@@ -35,12 +35,6 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       url: '/signIn',
       templateUrl: 'templates/signIn/signIn.html',
       controller: 'SignInCtrl'
-    })   
-    .state('setPassword', {
-      cache:false,
-      url: '/setPassword',
-      templateUrl: 'templates/signIn/setPassword.html',
-      controller: 'SetPasswordCtrl'
     })
     .state('register',{
       url:'/register',
@@ -133,6 +127,25 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
           controller:'SettingCtrl'
         }
       }
+    })
+    .state('ambulance.myProfile',{
+      url: '/myprofile',
+      views:{
+       'mine':{
+          templateUrl: 'templates/mine/myProfile.html',
+          controller:'myProfileCtrl'
+        }
+      }
+    })   
+    .state('ambulance.setPassword', {
+      cache:false,
+      url: '/setPassword',
+      views:{
+       'mine':{
+          templateUrl: 'templates/signIn/setPassword.html',
+          controller: 'SetPasswordCtrl'
+        }
+      }      
     });
 
     //起始页

@@ -106,8 +106,38 @@ angular.module('controllers', ['ionic','ngResource','services'])
   }
 }])
 //设置
-.controller('SettingCtrl',['$state','$scope',function($state,$scope){
-
+.controller('SettingCtrl',['$state','$scope','$ionicPopup','$timeout','$ionicHistory',function($state,$scope,$ionicPopup,$timeout,$ionicHistory){
+  $scope.logOutConfirm = function(){
+    var myPopup = $ionicPopup.show({
+      template: '<center>确定要退出登录吗?</center>',
+      title: '退出',
+      //subTitle: '2',
+      scope: $scope,
+      buttons: [
+        { text: '取消',
+          type: 'button-small',
+          onTap: function(e) {}
+        },
+        {
+          text: '<b>确定</b>',
+          type: 'button-small button-calm ',
+          onTap: function(e) {
+            // var USERNAME=Storage.get('USERNAME');
+            // Storage.clear();
+            // Storage.set('USERNAME',USERNAME);
+            $timeout(function(){
+              $ionicHistory.clearHistory();
+              $ionicHistory.clearCache();
+              $state.go('signIn');
+            },100);
+          }
+        }
+      ]
+    });    
+  }
+}])
+.controller('myProfileCtrl',['$state','$scope','$timeout','$ionicHistory',function($state,$scope,$timeout,$ionicHistory){
+  
 }])
 //个人信息维护
 
