@@ -1,5 +1,8 @@
 <ion-view title="提交位置信息">
-  <ion-nav-bar class="bar-dark nav-title-slide-ios7">    
+  <ion-nav-bar class="bar-dark nav-title-slide-ios7">
+    <ion-nav-buttons side="left">
+      <button class="button button-icon icon ion-android-arrow-back" ng-if="navFlag" ng-click="onClickBackward()"></button>
+    </ion-nav-buttons>    
   </ion-nav-bar>
   <ion-content >
 <!--     <a class="item " style="white-space:normal" ng-if="myLocation">当前选择： {{myLocation.text}}</a>

@@ -71,18 +71,16 @@ angular.module('controllers', ['ionic','ngResource','services'])
 }])
 //我的位置
 .controller('LocationCtrl',['$state','$scope','$rootScope',function($state,$scope,$rootScope){
-  $scope.myLocation={
-    text:''
-  };
+  $scope.myLocation={text:'',value:''};
   $scope.locationList=[];
+  $scope.navFlag=false;
   $scope.$on('$ionicView.enter', function() {
     if($rootScope.MY_LOCATION == undefined){
       $scope.isListShown=true;
-      console.log('first',$rootScope.MY_LOCATION);
     }else{
       $scope.myLocation=$rootScope.MY_LOCATION;
       $scope.isListShown=false;
-      console.log('after',$rootScope.MY_LOCATION);
+      $scope.navFlag=true;
     }   
   });
 
@@ -101,10 +99,11 @@ angular.module('controllers', ['ionic','ngResource','services'])
     $scope.isListShown=false;
     $state.go('ambulance.list');
   }
-  // $scope.selected = function(location){
-  //  $scope.myLocation =$scope.myLocation + location.text +' ';
-  //  updateLocation(location.text);
-  // }
+  $scope.onClickBackward = function(){
+    if($scope.navFlag){
+      $state.go('ambulance.mine')
+    }
+  }
 }])
 //设置
 .controller('SettingCtrl',['$state','$scope',function($state,$scope){
