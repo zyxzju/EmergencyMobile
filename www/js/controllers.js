@@ -13,7 +13,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 
 }])
 
-// --------登录、注册、修改密码、位置选择、个人信息维护 [熊佳臻]----------------
+// --------登录、注册、修改密码、位置选择、个人信息维护 [熊嘉臻]----------------
 //登录
 .controller('SignInCtrl',['$state','$scope','$ionicLoading','UserInfo','Storage',function($state,$scope,$ionicLoading,UserInfo,Storage){
   $scope.account = {UserID:'',password:''};
@@ -170,15 +170,24 @@ angular.module('controllers', ['ionic','ngResource','services'])
   }
 }])
 //我的位置
-.controller('LocationCtrl',['$state','$scope','$rootScope',function($state,$scope,$rootScope){
-  $scope.myLocation={text:'',value:''};
+.controller('LocationCtrl',['$ionicLoading','$state','$scope','$rootScope','UserInfo','Storage',function($ionicLoading,$state,$scope,$rootScope,UserInfo,Storage){
+  var MY_LOCATION;
+  $scope.myLocation={Description:""};
   $scope.locationList=[];
+  UserInfo.GetMstType('Place')
+  .then(function(data){
+    Storage.set("PlaceList",JSON.stringify(data));
+    $scope.locationList=data;
+  },function(err){
+
+  })
   $scope.navFlag=false;
   $scope.$on('$ionicView.enter', function() {
-    if($rootScope.MY_LOCATION == undefined){
+    MY_LOCATION = Storage.get('MY_LOCATION');
+    if(MY_LOCATION == undefined){
       $scope.isListShown=true;
     }else{
-      $scope.myLocation=$rootScope.MY_LOCATION;
+      $scope.myLocation.Description=MY_LOCATION;
       $scope.isListShown=false;
       $scope.navFlag=true;
     }   
@@ -191,24 +200,48 @@ angular.module('controllers', ['ionic','ngResource','services'])
     return $scope.isListShown?true:false;
   }
   
-  for(var i =0;i<5;i++){
-    $scope.locationList.push({text:''+i,value:i+'value'});
-  }   
+  // for(var i =0;i<5;i++){
+  //   $scope.locationList.push({text:''+i,value:i+'value'});
+  // }   
   $scope.setLocation = function(){
-    $rootScope.MY_LOCATION = $scope.myLocation;
-    $scope.isListShown=false;
-    $state.go('ambulance.list');
+    $ionicLoading.show();
+    var t;
+    for(var i in $scope.locationList){
+      if($scope.myLocation.Description == $scope.locationList[i].Description){
+        t=$scope.locationList[i].Category + '|' + $scope.locationList[i].Type;
+      }
+    }
+    UserInfo.SetMobileDevice({DeviceID:Storage.get('UUID'),Location:t,UserId:Storage.get('USERID'),DeviceFlag:1})
+    .then(function(data){
+      Storage.set('MY_LOCATION',$scope.myLocation.Description);
+      $scope.isListShown=false;
+      $ionicLoading.hide();
+      $ionicLoading.show({template:'位置已更新',noBackdrop:true,duration:1500});
+      if($scope.navFlag){
+        $state.go('ambulance.mine');
+      }else{
+        $state.go('ambulance.list');
+      }      
+    },function(err){
+      $ionicLoading.hide();
+      $ionicLoading.show({template:'更新位置出错',noBackdrop:true,duration:3000});
+    })
+
   }
   $scope.onClickBackward = function(){
-    if($scope.navFlag){
+    // $scope.$apply(function(){
+      $scope.myLocation.Description=MY_LOCATION;
+    // })
+    console.log($rootScope.MY_LOCATION);
+    // if($scope.navFlag){
       $state.go('ambulance.mine');
-    }
+    // }
   }
 }])
 //设置-退出
 .controller('SettingCtrl',['$state','$scope','$ionicPopup','$timeout','$ionicHistory','$rootScope','Storage',function($state,$scope,$ionicPopup,$timeout,$ionicHistory,$rootScope,Storage){
   $scope.$on('$ionicView.enter', function() {
-    $scope.myLocation=$rootScope.MY_LOCATION.text;
+    $scope.myLocation=Storage.get('MY_LOCATION');
     $scope.isListShown=false;
   });
   $scope.logOutConfirm = function(){

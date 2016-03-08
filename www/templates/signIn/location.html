@@ -16,12 +16,12 @@
         <!-- <i class="icon ion-chevron-down" ng-if="!isListShow"></i><i class="icon ion-chevron-up" ng-if="isListShow"></i> -->
         <!-- <i class="icon" ng-class="{isListShown? 'ion-chevron-up':'ion-chevron-down'}"></i> -->
         <i class="icon" ng-class="isIconShown() ?'ion-chevron-up':'ion-chevron-down'"></i>
-        当前选择： {{myLocation.text}}
+        当前选择： {{myLocation.Description}}
       </ion-item>
 <!--       <ion-item ng-repeat="location in locationList" ng-show="isListShown">
         {{location.value}}
       </ion-item> -->
-      <ion-radio class="item-accordion" ng-repeat="location in locationList" ng-show="isListShown" ng-value="location.text" ng-model="myLocation.text">{{location.value}}</ion-radio>  
+      <ion-radio class="item-accordion" ng-repeat="location in locationList" ng-show="isListShown" ng-value="location.Description" ng-model="myLocation.Description">{{location.Description}}</ion-radio>  
       <button class="item-accordion button button-block button-assertive" style="transition: 0.09s all linear" ng-show="isListShown" ng-click="setLocation()">提 交</button>
     </ion-list>  
   </ion-content>
