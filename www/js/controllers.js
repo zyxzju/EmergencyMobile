@@ -176,19 +176,14 @@ angular.module('controllers', ['ionic','ngResource','services'])
   $scope.locationList=[];
   UserInfo.GetMstType('Place')
   .then(function(data){
-    // console.log(data);
-    console.log(JSON.stringify(data));
     Storage.set("PlaceList",JSON.stringify(data));
     $scope.locationList=data;
   },function(err){
 
   })
-
-  
   $scope.navFlag=false;
   $scope.$on('$ionicView.enter', function() {
     MY_LOCATION = Storage.get('MY_LOCATION');
-    console.log($rootScope.MY_LOCATION);
     if(MY_LOCATION == undefined){
       $scope.isListShown=true;
     }else{
@@ -223,7 +218,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
       $ionicLoading.hide();
       $ionicLoading.show({template:'位置已更新',noBackdrop:true,duration:1500});
       if($scope.navFlag){
-        $state.go('ambulance.mine')
+        $state.go('ambulance.mine');
       }else{
         $state.go('ambulance.list');
       }      
