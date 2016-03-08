@@ -201,11 +201,11 @@ angular.module('controllers', ['ionic','ngResource','services'])
   }
   $scope.onClickBackward = function(){
     if($scope.navFlag){
-      $state.go('ambulance.mine')
+      $state.go('ambulance.mine');
     }
   }
 }])
-//设置
+//设置-退出
 .controller('SettingCtrl',['$state','$scope','$ionicPopup','$timeout','$ionicHistory','$rootScope','Storage',function($state,$scope,$ionicPopup,$timeout,$ionicHistory,$rootScope,Storage){
   $scope.$on('$ionicView.enter', function() {
     $scope.myLocation=$rootScope.MY_LOCATION.text;
@@ -240,6 +240,8 @@ angular.module('controllers', ['ionic','ngResource','services'])
     });    
   }
 }])
+
+//个人信息维护
 .controller('myProfileCtrl',['$state','$scope','$ionicHistory','$ionicLoading','UserInfo','Storage',function($state,$scope,$ionicHistory,$ionicLoading,UserInfo,Storage){
   var DictRoles=JSON.parse(Storage.get('DictRoleMatch'));
   var temp={};
@@ -285,12 +287,67 @@ angular.module('controllers', ['ionic','ngResource','services'])
     $ionicLoading.hide();
   });
 }])
-//个人信息维护
-
 
 // --------急救人员-列表、新建、后送 [赵艳霞]----------------
 //已接收病人列表
+.controller('AmbulanceListCtrl',['$state','$scope','$ionicLoading','UserInfo','Storage',function($state,$scope,$ionicLoading,UserInfo,Storage){
+ 
+  //tab选中的控制
+  //初始化与权限相关
+    if(Storage.get('RoleCode')=='EmergencyPersonnel'){    
+        $scope.tab1_checked=true;  
+         $scope.tab2_checked=false;  
+         $scope.tab3_checked=false;  
+         $scope.curtab="tab1";  
+         $scope.tab1_color={color:'blue'};   
+         $scope.tab2_color="";  
+         $scope.tab3_color="";  
+     }
+     else{
+         $scope.tab1_checked=false;  
+         $scope.tab2_checked=true;  
+         $scope.tab3_checked=false;  
+         $scope.curtab="tab2";  
+         $scope.tab1_color="";   
+         $scope.tab2_color={color:'blue'};  
+         $scope.tab3_color="";  
+     }
+ 
+   $scope.sel_tab = function(vtab) {  
+     if(vtab=="tab1"){  
+            console.log("------TabController.sel_tab-1");  
+            $scope.tab1_checked=true;  
+            $scope.tab2_checked=false;  
+            $scope.tab3_checked=false;  
+            $scope.curtab="tab1";  
+            $scope.tab1_color={color:'blue'};  
+            $scope.tab2_color="";  
+            $scope.tab3_color="";  
+               
+              
+     }else if (vtab=="tab2"){  
+            console.log("------TabController.sel_tab-2");  
+          $scope.tab1_checked=false;  
+            $scope.tab2_checked=true;  
+            $scope.tab3_checked=false;  
+            $scope.curtab="tab2";  
+            $scope.tab1_color="";  
+            $scope.tab2_color={color:'blue'};  
+            $scope.tab3_color="";                 
+     }else if (vtab=="tab3"){  
+            console.log("------TabController.sel_tab-3");  
+          $scope.tab1_checked=false;  
+            $scope.tab2_checked=false;  
+            $scope.tab3_checked=true;  
+            $scope.curtab="tab3";  
+            $scope.tab1_color="";  
+            $scope.tab2_color="";  
+            $scope.tab3_color={color:'blue'};                  
+     }  
+       
+    };
 
+}])
 //新建ID
 
 //后送

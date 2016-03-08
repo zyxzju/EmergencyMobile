@@ -9,6 +9,11 @@ angular.module('services', ['ionic','ngResource'])
   //DeviceType: '1',
 })
 
+// --------一些公用说明--------
+//角色 {'DivideLeader':'分流组长','DividePersonnel':'分流人员','EmergencyPersonnel':'急救人员'}
+//伤情等级  {'1':'轻','2':'中','3':'重','4':重危'}
+
+
 // 本地存储函数
 .factory('Storage', ['$window', function ($window) {
   return {

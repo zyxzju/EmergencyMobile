@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova'])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform, $rootScope) {
   $ionicPlatform.ready(function() {
     if(window.cordova && window.cordova.plugins.Keyboard) {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -20,6 +20,12 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
     if(window.StatusBar) {
       StatusBar.styleDefault();
     }
+
+    // listen for Offline event
+    $rootScope.$on('$cordovaNetwork:offline', function(event, networkState){
+        alert('掉线啦');
+    })
+
   });
 })
 
@@ -60,7 +66,7 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       views:{
         'ambulance':{
         templateUrl: 'templates/ambulance/list.html',
-        // controller:'ambulancePatientCtrl'
+        controller:'AmbulanceListCtrl'
         }
       }
     })

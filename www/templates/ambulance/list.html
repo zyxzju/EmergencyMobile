@@ -4,23 +4,23 @@
     <a class="button button-icon icon ion-android-person-add" href="#/newPatient"></a>
   </ion-nav-buttons>
   <ion-header-bar class="bar-calm">
-    <div class="tabs-striped tabs-top tabs-color-assertive">
-      <div class="tabs">
-        <a class="tab-item active" href="#/ambulance/list">
-          已接收
-        </a>
-        <a class="tab-item" href="#/ambulance/list1">
-          <!-- <i class="icon ion-star"></i> -->
-          已后送
-        </a>
-        <a class="tab-item" href="#/ambulance/mine">
-          <!-- <i class="icon ion-gear-a"></i> -->
-          已送达
-        </a>
-      </div>
-    </div>
+      <div class="tabs tabs-icon-top tabs-top"  >  
+          <a class="tab-item" ng-click="sel_tab('tab1')"    >  
+            <i class="icon ion-ios-heart"  ng-style="tab1_color"  ></i>  
+                <span  ng-style="tab1_color"  >已接收</span>  
+          </a>  
+          <a class="tab-item" ng-click="sel_tab('tab2')">  
+            <i class="icon ion-ios-star-half" ng-style="tab2_color" ></i>  
+                <span  ng-style="tab2_color"  >已后送</span>  
+          </a>                    
+          <a class="tab-item" ng-click="sel_tab('tab3')" >  
+            <i class="icon ion-ios-star" ng-style="tab3_color"></i>  
+            <span  ng-style="tab3_color"  >已送达</span>  
+          </a>  
+        </div> 
   </ion-header-bar>
+
   <ion-content> 
-      
+       
   </ion-content>
 </ion-view>
