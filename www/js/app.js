@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova'])
 
-.run(function($ionicPlatform, $rootScope) {
+.run(function($ionicPlatform, $rootScope,Storage) {
   $ionicPlatform.ready(function() {
     if(window.cordova && window.cordova.plugins.Keyboard) {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -25,7 +25,8 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
     $rootScope.$on('$cordovaNetwork:offline', function(event, networkState){
         alert('掉线啦');
     })
-
+    Storage.set('UUID',ionic.Platform.device().uuid);
+    Storage.rm('MY_LOCATION');
   });
 })
 

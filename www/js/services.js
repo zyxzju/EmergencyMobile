@@ -62,33 +62,46 @@ return{
 
 // 数据模型函数, 具有取消(cancel/abort)HTTP请求(HTTP request)的功能
 .factory('Data',['$resource', '$q','$interval' ,'CONFIG','Storage' , function($resource,$q,$interval ,CONFIG,Storage){
-   var serve={};
-   var abort = $q.defer();
-   var getToken=function(){
-     return Storage.get('TOKEN') ;
-   }
+  var serve={};
+  var abort = $q.defer();
+  var getToken=function(){
+    return Storage.get('TOKEN') ;
+  }
 
-   var Users = function(){
-      return $resource(CONFIG.baseUrl + ':path/:route',{path:'UserInfo',},{
-        LogOn:{method:'POST', params:{route: 'LogOn',UserID:'@UserID',LoginPassword:'@LoginPassword'}, timeout: 10000},
-        UserRegister:{method:'POST', params:{route: 'UserRegister'}, timeout: 10000},
-        ChangePassword:{method:'POST',params:{route:'ChangePassword',UserID:'@UserID',OldPassword:'@OldPassword',NewPassword:'@NewPassword'},timeout: 10000},
-        UID:{method:'GET',params:{route:'UID',Type:'@Type',Name:'@Name'},timeout:10000},
-        ModifyUserInfo:{method:'POST',params:{route:'ModifyUserInfo',UserID:'@UserID',RoleCode:'@RoleCode',UserName:'@UserName',Occupation:"@Occupation",Position:'@Position',Affiliation:'@Affiliation'},timeout:10000},
-        SetUserInfo:{method:'POST',params:{route:'SetUserInfo'},timeout:10000},
-        GetModifyUserInfo:{method:'GET',params:{route:'GetModifyUserInfo',UserID:'@UserID'},timeout:10000},
-      });
-    };
-
-    serve.abort = function ($scope) {
-    abort.resolve();
-    $interval(function () {
-      abort = $q.defer();
-      serve.Users = Users(); 
-      }, 0, 1);
-    };
-    serve.Users = Users();
-    return serve;
+  var Users = function(){
+    return $resource(CONFIG.baseUrl + ':path/:route',{path:'UserInfo',},{
+      LogOn:{method:'POST', params:{route: 'LogOn',UserID:'@UserID',LoginPassword:'@LoginPassword'}, timeout: 10000},
+      UserRegister:{method:'POST', params:{route: 'UserRegister'}, timeout: 10000},
+      ChangePassword:{method:'POST',params:{route:'ChangePassword',UserID:'@UserID',OldPassword:'@OldPassword',NewPassword:'@NewPassword'},timeout: 10000},
+      UID:{method:'GET',params:{route:'UID',Type:'@Type',Name:'@Name'},timeout:10000},
+      ModifyUserInfo:{method:'POST',params:{route:'ModifyUserInfo',UserID:'@UserID',RoleCode:'@RoleCode',UserName:'@UserName',Occupation:"@Occupation",Position:'@Position',Affiliation:'@Affiliation'},timeout:10000},
+      SetUserInfo:{method:'POST',params:{route:'SetUserInfo'},timeout:10000},
+      GetModifyUserInfo:{method:'GET',params:{route:'GetModifyUserInfo',UserID:'@UserID'},timeout:10000},
+    });
+  };
+  var MstType = function(){
+    return $resource(CONFIG.baseUrl + ':path/:route',{path:'MstType',},{
+      GetMstType:{method:'GET',isArray:true, params:{route: 'GetMstType',Category:'@Category'}, timeout: 10000}
+    });
+  }; 
+  var MobileDevice = function(){
+    return $resource(CONFIG.baseUrl + ':path/:route',{path:'MobileDevice',},{
+      SetMobileDevice:{method:'POST', params:{route: 'SetMobileDevice'}, timeout: 10000}
+    });
+  };  
+  serve.abort = function ($scope) {
+  abort.resolve();
+  $interval(function () {
+    abort = $q.defer();
+    serve.Users = Users(); 
+    serve.MstType = MstType(); 
+    serve.MobileDevice = MobileDevice(); 
+    }, 0, 1);
+  };
+  serve.Users = Users();
+  serve.MstType = MstType(); 
+  serve.MobileDevice = MobileDevice(); 
+  return serve;
 }])
 
 //示例
@@ -128,7 +141,7 @@ return{
   return self;
 }])
 
-//用户基本操作-登录、注册、修改密码、位置选择、个人信息维护 [熊佳臻]
+//用户基本操作-登录、注册、修改密码、位置选择、个人信息维护 [熊嘉臻]
 .factory('UserInfo', ['$q', 'Data',function($q, Data){
   var self = this;
   var RevUserId="xxx";
@@ -205,7 +218,29 @@ return{
         deferred.reject(err);
       });
     return deferred.promise;
-  };    
+  };
+  self.GetMstType = function(key){
+    var deferred = $q.defer();
+    Data.MstType.GetMstType({Category:key}, 
+      function (data, headers) {
+        deferred.resolve(data);
+      }, function (err) {
+        deferred.reject(err);
+      });
+    return deferred.promise;    
+  }
+  self.SetMobileDevice = function(form){
+    var deferred = $q.defer();
+    form.TerminalName = TerminalName;
+    form.TerminalIP = TerminalIP;
+    Data.MobileDevice.SetMobileDevice(form, 
+      function (data, headers) {
+        deferred.resolve(data);
+      }, function (err) {
+        deferred.reject(err);
+      });
+    return deferred.promise;    
+  }  
   return self;
 }])
 
