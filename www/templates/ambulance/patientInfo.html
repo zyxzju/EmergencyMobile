@@ -3,9 +3,6 @@
     <ion-nav-buttons side="primary">
       <button class="button button-clear" ng-click="goBack()">返回</button>
     </ion-nav-buttons>
-    <ion-nav-buttons side="secondary">
-      <button class="button button-clear" ng-click="nextStep()">下一步</button>
-    </ion-nav-buttons>
   </ion-nav-bar>
 
   <ion-content>
@@ -21,7 +18,7 @@
             <span class="input-label">患者ID</span> 
           </div>  
           <div class="col-67" >
-          <input type="text" ng-model="NewPatientID.PatientID" style="width:100%;background:#f4f4f4;height:34px;" > 
+          <input type="text" ng-model="BasicInfo.PatientID" style="width:100%;background:#f4f4f4;height:34px;" readonly="readonly"> 
           </div>
         </div>
 
@@ -111,7 +108,7 @@
             <span class="input-label">头衔</span> 
           </div>  
           <div class="col col-67">
-            <select ng-model="BasicInfo.Rank" ng-options="Rank.Type as Rank.Description for Rank in Ranks" style="width:100%">
+            <select ng-model="BasicInfo.Rank" ng-options="Rank.JOB as Rank.Description for Rank in Ranks" style="width:100%">
             </select>
           </div>
         </div>
@@ -120,6 +117,6 @@
    </ion-list>
   </ion-content>
 <ion-footer-bar>
-    <button ng-click='SaveNewPatientID()' class="button button-full button-assertive">保存</button>
+    <button ng-click='showConfirm()' class="button button-full button-assertive">保存</button>
 </ion-footer-bar>
 </ion-view>

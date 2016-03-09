@@ -4,14 +4,6 @@ angular.module('controllers', ['ionic','ngResource','services'])
   // Storage.set('initState', 'simple.homepage');
    $scope.DeviceID=ionic.Platform.device().uuid; //获取移动设备
 }])
-.controller('NewPatientCtrl', ['$scope', '$ionicHistory', function ($scope, $ionicHistory) {
-
-  $scope.goBack = function() {
-    console.log("1");
-    $ionicHistory.goBack();
-  };
-
-}])
 
 // --------登录、注册、修改密码、位置选择、个人信息维护 [熊嘉臻]----------------
 //登录
@@ -323,81 +315,814 @@ angular.module('controllers', ['ionic','ngResource','services'])
 
 // --------急救人员-列表、新建、后送 [赵艳霞]----------------
 //已接收病人列表
-.controller('AmbulanceListCtrl',['$state','$scope','$ionicLoading','UserInfo','Storage',function($state,$scope,$ionicLoading,UserInfo,Storage){
+.controller('AmbulanceListCtrl',['$state','$scope','$ionicLoading','UserInfo','Storage','PatientVisitInfo', '$state', function($state,$scope,$ionicLoading,UserInfo,Storage, PatientVisitInfo, $state){
  
+  //根据状态获取不同列表，并控制显示
+  var GetPatientsbyStatus = function(Status)
+  {
+      var promise = PatientVisitInfo.GetPatientsbyStatus(Status); 
+      promise.then(function(data)
+      { 
+         $scope.PatientList = data;
+         $scope.$broadcast('scroll.refreshComplete'); 
+        },function(err) {   
+      });      
+  }
+
+  $scope.setCurrent = function(item) {
+    Storage.set("PatientID", item.PatientID);  
+    Storage.set("VisitNo", item.VisitNo);
+    if(Storage.get('RoleCode')=='EmergencyPersonnel')  {
+      if($scope.curtab=="tab1"){
+        $state.go('visitInfo'); 
+      }  
+      else $state.go('viewEmergency'); 
+    }
+    else {
+      if($scope.curtab!="tab1"){
+        $state.go('viewEmergency'); 
+      }
+    }
+  };
+
+
   //tab选中的控制
-  //初始化与权限相关
-    if(Storage.get('RoleCode')=='EmergencyPersonnel'){    
-        $scope.tab1_checked=true;  
-         $scope.tab2_checked=false;  
-         $scope.tab3_checked=false;  
-         $scope.curtab="tab1";  
-         $scope.tab1_color={color:'blue'};   
-         $scope.tab2_color="";  
-         $scope.tab3_color="";  
-     }
-     else{
-         $scope.tab1_checked=false;  
-         $scope.tab2_checked=true;  
-         $scope.tab3_checked=false;  
-         $scope.curtab="tab2";  
-         $scope.tab1_color="";   
-         $scope.tab2_color={color:'blue'};  
-         $scope.tab3_color="";  
-     }
- 
-   $scope.sel_tab = function(vtab) {  
-     if(vtab=="tab1"){  
-            console.log("------TabController.sel_tab-1");  
-            $scope.tab1_checked=true;  
-            $scope.tab2_checked=false;  
-            $scope.tab3_checked=false;  
-            $scope.curtab="tab1";  
-            $scope.tab1_color={color:'blue'};  
-            $scope.tab2_color="";  
-            $scope.tab3_color="";  
-               
-              
-     }else if (vtab=="tab2"){  
-            console.log("------TabController.sel_tab-2");  
+  //默认显示 初始化与角色权限相关
+  if(Storage.get('RoleCode')=='EmergencyPersonnel'){    
+      $scope.tab1_checked=true;  
+       $scope.tab2_checked=false;  
+       $scope.tab3_checked=false;  
+       $scope.curtab="tab1";  
+       $scope.tab1_color={color:'blue'};   
+       $scope.tab2_color="";  
+       $scope.tab3_color="";  
+       GetPatientsbyStatus(1);
+   }
+   else if(Storage.get('RoleCode')=='EmergencyPersonnel'){
+       $scope.tab1_checked=false;  
+       $scope.tab2_checked=true;  
+       $scope.tab3_checked=false;  
+       $scope.curtab="tab2";  
+       $scope.tab1_color="";   
+       $scope.tab2_color={color:'blue'};  
+       $scope.tab3_color="";  
+       GetPatientsbyStatus(2);
+   }
+   else{
+       $scope.tab1_checked=false;  
+       $scope.tab2_checked=false;  
+       $scope.tab3_checked=true;  
+       $scope.curtab="tab3";  
+       $scope.tab1_color="";   
+       $scope.tab2_color="";  
+       $scope.tab3_color={color:'blue'};  
+       GetPatientsbyStatus(3);
+   }
+
+ //tab切换列表 显示或隐藏
+ $scope.sel_tab = function(vtab) {  
+   if($scope.curtab!=vtab) 
+   {
+    if(vtab=="tab1")  GetPatientsbyStatus(1);
+    else if(vtab=="tab2")  GetPatientsbyStatus(2);
+    else  GetPatientsbyStatus(3);
+   }
+
+   if(vtab=="tab1"){ 
+          $scope.tab1_checked=true;  
+          $scope.tab2_checked=false;  
+          $scope.tab3_checked=false;  
+          $scope.curtab="tab1";  
+          $scope.tab1_color={color:'blue'};  
+          $scope.tab2_color="";  
+          $scope.tab3_color="";                   
+   }else if (vtab=="tab2"){  
           $scope.tab1_checked=false;  
-            $scope.tab2_checked=true;  
-            $scope.tab3_checked=false;  
-            $scope.curtab="tab2";  
-            $scope.tab1_color="";  
-            $scope.tab2_color={color:'blue'};  
-            $scope.tab3_color="";                 
-     }else if (vtab=="tab3"){  
-            console.log("------TabController.sel_tab-3");  
+          $scope.tab2_checked=true;  
+          $scope.tab3_checked=false;  
+          $scope.curtab="tab2";  
+          $scope.tab1_color="";  
+          $scope.tab2_color={color:'blue'};  
+          $scope.tab3_color="";                 
+   }else if (vtab=="tab3"){  
           $scope.tab1_checked=false;  
-            $scope.tab2_checked=false;  
-            $scope.tab3_checked=true;  
-            $scope.curtab="tab3";  
-            $scope.tab1_color="";  
-            $scope.tab2_color="";  
-            $scope.tab3_color={color:'blue'};                  
-     }  
-       
-    };
+          $scope.tab2_checked=false;  
+          $scope.tab3_checked=true;  
+          $scope.curtab="tab3";  
+          $scope.tab1_color="";  
+          $scope.tab2_color="";  
+          $scope.tab3_color={color:'blue'};                  
+   }  
+     
+  };
+  
+  //下拉刷新
+   $scope.refreshList = function() { 
+     if($scope.curtab=="tab1")  GetPatientsbyStatus(1);
+     else if($scope.curtab=="tab2")  GetPatientsbyStatus(2);
+     else  GetPatientsbyStatus(3);
+   };
 
 }])
-//新建ID
 
+//新建PID
+.controller('NewPatientCtrl', ['$scope', '$ionicHistory' ,'PatientInfo','MstType','$ionicLoading','$ionicPopup','Storage','$state', function ($scope, $ionicHistory,PatientInfo,MstType,$ionicLoading,$ionicPopup,Storage,$state) {
+
+  $scope.goBack = function() {
+    $ionicHistory.goBack();
+  }; 
+
+  $scope.nextStep = function(GetPatientsbyStatus){
+      if(Storage.get("PatientID")=="")
+      {
+        $ionicLoading.show({
+          template: "未新建病人ID，不能继续U",
+          noBackdrop: true,
+          duration: 1000,
+        });
+      }
+    else  $state.go('newVisit');
+  }
+
+  
+  var GetDefault =function(){    
+    Storage.set("PatientID","");  
+    Storage.set("VisitNo","");
+    $scope.NewPatientID={"PatientID":""};
+
+    var promise_NewPatient = PatientInfo.GetNewPatientID();  //获取推荐PID
+     promise_NewPatient.then(function(data)
+     { 
+       $scope.NewPatientID.PatientID= data.PatientID;
+       
+      },function(err) {   
+     }); 
+
+     // 获取血型类型
+     var promise_BloodType = MstType.GetMstType('BloodType');
+     promise_BloodType.then(function(data)
+     { 
+       $scope.BloodTypes = data;
+       },function(err) {   
+     });      
+
+     //获取性别
+     var promise_Gender = MstType.GetMstType('Gender');
+     promise_Gender.then(function(data)
+     { 
+       $scope.Genders = data;
+      },function(err) {   
+    });      
+        
+    //获取部别
+     var promise_Troop = MstType.GetMstType('Troop');
+     promise_Troop.then(function(data)
+     { 
+       $scope.Troops = data;
+      },function(err) {   
+    });      
+     
+     //获取职位
+     var promise_JOB = MstType.GetMstType('JOB');
+     promise_JOB.then(function(data)
+     { 
+       $scope.JOBs = data;
+      },function(err) {   
+    });      
+  
+     //获取头衔
+     var promise_Rank = MstType.GetMstType('Rank');
+     promise_Rank.then(function(data)
+     { 
+       $scope.Ranks = data;
+      },function(err) {   
+    }); 
+  }
+    
+  GetDefault(); //加载页面默认参数     
+
+  //检查新建的PID是否重复,不重复则弹出确认框
+  $scope.SaveNewPatientID = function() {
+    if($scope.NewPatientID.PatientID==""){
+      $ionicLoading.show({
+        template: "病人ID不能为空",
+        noBackdrop: true,
+        duration: 1000,
+      });
+    }
+    else{
+      var promise_CheckPatientID = PatientInfo.CheckPatientID( $scope.NewPatientID.PatientID);
+      promise_CheckPatientID.then(function(data)
+       { 
+          if(data.result=="病人Id不存在"){
+             showConfirm();
+          }
+          else{
+            $ionicLoading.show({
+              template: "该病人ID已存在，请重新输入",
+              noBackdrop: true,
+              duration: 1000,
+            });
+          }
+        },function(err) {   
+      }); 
+    } //else end
+  }  
+
+   $scope.BasicInfo={}; //提交的容器初始化
+   //新建患者确认框
+   var showConfirm = function() {
+      $scope.confirmPopup = $ionicPopup.confirm({
+         title: '确认提交?',
+         template: '您新建患者的PID是  '+$scope.NewPatientID.PatientID,
+         scope: $scope,
+         buttons: [
+            {text: '提交',
+             type: 'button-assertive',
+           　onTap: function(e) {
+               sendData = {
+                "PatientID": $scope.NewPatientID.PatientID,
+                "PatientName": $scope.BasicInfo.PatientName,
+                "Gender":  $scope.BasicInfo.Gender,
+                "Age": $scope.BasicInfo.Age,
+                "DOB": $scope.BasicInfo.DOB,
+                "BloodType": $scope.BasicInfo.BloodType,
+                "Allergy": $scope.BasicInfo.Allergy,
+                "ImageID": $scope.BasicInfo.ImageID,
+                "TroopType": $scope.BasicInfo.Troop,
+                "Job": $scope.BasicInfo.JOB,
+                "Rank": $scope.BasicInfo.Rank,
+                'UserID':'',
+                'TerminalName':"",
+                "TerminalIP": ""
+              }
+            var promise =  PatientInfo.SetPatientInfo(sendData);
+            promise.then(function(data){ 
+                  if(data.result=="数据插入成功"){
+                    //console.log($scope.NewPatientID.PatientID);
+                    Storage.set("PatientID", $scope.NewPatientID.PatientID); //Storage存入PatientID
+                    $ionicLoading.show({
+                       template: "保存成功",
+                       noBackdrop: true,
+                      duration: 1000,
+                    });
+                  }//if end 
+                },function(err) {  
+                   $ionicLoading.show({
+                     template:"保存失败" , //err.data.result
+                     noBackdrop: false,
+                     duration: 1000,
+                     hideOnStateChange: true
+                   }); 
+            }); //promise end
+          } //onTap end
+        },{
+            text: '<b>取消</b>',
+            type: 'button-positive',
+         }]
+      });
+   }
+                   
+}])
+
+//新建VID
+.controller('NewVisitCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo', function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo) {
+
+  $scope.goBack = function() {
+    $ionicHistory.goBack();
+  };
+  
+  //获取推荐VID
+  var GetNewVisitNo= function(patientID)
+  {
+     var promise = PatientVisitInfo.GetNewVisitNo(patientID); 
+     promise.then(function(data)
+     { 
+        $scope.NewVisitNo = data;
+        },function(err) {   
+     });      
+  }
+
+  //获取病人基本信息
+  var GetPsPatientInfo= function(strPatientID)
+  {
+     var promise = PatientInfo.GetPsPatientInfo(strPatientID); 
+     promise.then(function(data)
+     { 
+       $scope.Patient = data;
+      },function(err) {   
+    });      
+  }
+
+  //获取病人基本信息
+  $scope.$on('$ionicView.enter', function() { 
+      GetNewVisitNo(Storage.get("PatientID"));
+      GetPsPatientInfo(Storage.get("PatientID")); 
+  }); 
+
+  $scope.visitInfo={"InjuryArea": "", "InjuryDateTime": new Date(), "VisitDateTime": new Date()};
+
+  //保存确认框
+  $scope.showConfirm = function() {
+  
+    $scope.confirmPopup = $ionicPopup.confirm({
+           title: '确认提交?',
+           template: '请确认就诊编号为'+$scope.NewVisitNo.VisitNo,
+           scope: $scope,
+           buttons: [
+              {text: '提交',
+               type: 'button-assertive',
+             　onTap: function(e) {
+                 var sendData = {
+                  "PatientID": Storage.get("PatientID"),
+                  "VisitNo":  $scope.NewVisitNo.VisitNo,
+                  "Status": "1",
+                  "DeviceID": "",  //暂时留空
+                  "InjuryArea": $scope.visitInfo.InjuryArea, 
+                  "InjuryAreaGPS": "",
+                  "InjuryDateTime": $scope.visitInfo.InjuryDateTime, //"9999-12-31 23:59:59"
+                  "VisitDateTime": $scope.visitInfo.VisitDateTime, //"2016-03-07 19:07:19"
+                  "EvaDateTime": new Date("9999-12-31 23:59:59"),
+                  "EvaBatchNo": "",
+                  "EvaDestination": "",
+                  "EvaTransportation": "",
+                  "EvaPosition": "",
+                  "ArriveDateTime": new Date("9999-12-31 23:59:59"),
+                  "ArrivePlace": "",
+                  "TriageDateTime": new Date("9999-12-31 23:59:59"),
+                  "TriageToDept": "",
+                  "UnitCode": "",
+                  "UserID": "",
+                  "TerminalName": "",
+                  "TerminalIP": ""
+                }
+              //console.log(sendData);
+              var promise =  PatientVisitInfo.SetPsPatientVisitInfo(sendData);
+              promise.then(function(data){ 
+                  if(data.result=="数据插入成功"){
+                      //Storage存入VisitNo
+                      Storage.set("VisitNo",$scope.NewVisitNo.VisitNo); 
+                      $ionicLoading.show({
+                       template: "保存成功",
+                       noBackdrop: true,
+                       duration: 700,
+                      });
+                  }
+                },function(err) {  
+                   $ionicLoading.show({
+                      template: "保存失败",
+                     noBackdrop: false,
+                     duration: 1000,
+                     hideOnStateChange: true
+                   }); 
+              }); 
+            }
+          },
+          {
+              text: '取消',
+              type: 'button-positive',
+          }]
+    });
+     
+  };
+     
+  //后送确认框         
+    $scope.showreservePop = function() {
+      if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!=''))
+      {
+            var myPopup = $ionicPopup.show({
+               templateUrl: 'templates/ambulance/evacuation.html',
+               title: '后送操作',
+               scope: $scope,
+               buttons: [
+                  {text: '确定',
+                   type: 'button-assertive',
+                 　onTap: function(e) {
+                      Evacuation();
+        　　　　    }
+                   },{
+                   text: '取消',
+                   type: 'button-positive',
+               }]
+           });
+
+      }
+      else
+      {
+        $ionicLoading.show({
+           template: '请先保存就诊记录',
+           noBackdrop: false,
+           duration: 1000,
+           hideOnStateChange: true
+        });
+
+      }
+   }
+
+      //后送操作
+     $scope.evacuationInfo={"EvaDateTime": new Date(), "EvaBatchNo":"", "EvaDestination":"",  "EvaTransportation":"",  "EvaPosition":""};
+     var Evacuation= function()
+     {
+
+        var sendData={
+          "PatientID": Storage.get("PatientID"),
+          "VisitNo": Storage.get("VisitNo"),
+          "Status": "2",
+          "EvaDateTime": $scope.evacuationInfo.EvaDateTime,
+          "EvaBatchNo": $scope.evacuationInfo.EvaBatchNo,
+          "EvaDestination": $scope.evacuationInfo.EvaDestination,
+          "EvaTransportation": $scope.evacuationInfo.EvaTransportation,
+          "EvaPosition": $scope.evacuationInfo.EvaPosition,
+          "UserID": "",
+          "TerminalName": "",
+          "TerminalIP": ""
+        }
+        console.log(sendData);
+       var promise =  PatientVisitInfo.UpdateEva(sendData); 
+       promise.then(function(data){ 
+          if(data.result=="数据插入成功"){
+            $ionicLoading.show({
+              template: "后送完成！",
+              noBackdrop: false,
+              duration: 1000,
+              hideOnStateChange: true
+            });
+            setTimeout(function(){
+              $state.go('ambulance.list'); //回主页
+            },600);
+          }
+         },function(err) {   
+       }); 
+     } 
+     
+
+     //后送选项加载
+     //后送批次
+     var promise_EVABatchNos = MstType.GetMstType('EVABatchNo');
+      promise_EVABatchNos.then(function(data)
+         { 
+           $scope.EVABatchNos = data;
+          },function(err) {   
+      }); 
+
+     //后送方式
+     var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
+     promise_EvaTransportation.then(function(data)
+     { 
+        $scope.EvaTransportations = data;
+        },function(err) {   
+     });      
+
+    //后送体位
+     var promise_EvaPosition = MstType.GetMstType('EvaPosition');
+     promise_EvaPosition.then(function(data)
+     { 
+        $scope.EvaPositions = data;
+       },function(err) {   
+     });      
+
+     //后送地点 必须
+     var promise = MstType.GetMstType('EvaDestination');
+     promise.then(function(data)
+     { 
+       $scope.EvaDestinations = data;
+      },function(err) {   
+    });      
+
+}])
+
+//查看或编辑病人基本信息
+.controller('PatientInfoCtrl', ['$scope', '$ionicHistory' ,'PatientInfo','MstType','$ionicLoading','$ionicPopup','Storage','$state', function ($scope, $ionicHistory,PatientInfo,MstType,$ionicLoading,$ionicPopup,Storage,$state) {
+
+  $scope.goBack = function() {
+    $ionicHistory.goBack();
+  }; 
+
+  //获取下拉框选项
+  var GetDefault =function(){    
+
+     // 获取血型类型
+     var promise_BloodType = MstType.GetMstType('BloodType');
+     promise_BloodType.then(function(data)
+     { 
+       $scope.BloodTypes = data;
+       },function(err) {   
+     });      
+
+     //获取性别
+     var promise_Gender = MstType.GetMstType('Gender');
+     promise_Gender.then(function(data)
+     { 
+       $scope.Genders = data;
+      },function(err) {   
+    });      
+        
+    //获取部别
+     var promise_Troop = MstType.GetMstType('Troop');
+     promise_Troop.then(function(data)
+     { 
+       $scope.Troops = data;
+      },function(err) {   
+    });      
+     
+     //获取职位
+     var promise_JOB = MstType.GetMstType('JOB');
+     promise_JOB.then(function(data)
+     { 
+       $scope.JOBs = data;
+      },function(err) {   
+    });      
+  
+     //获取头衔
+     var promise_Rank = MstType.GetMstType('Rank');
+     promise_Rank.then(function(data)
+     { 
+       $scope.Ranks = data;
+      },function(err) {   
+    }); 
+  }
+    
+  GetDefault(); //加载页面默认参数     
+  
+  $scope.BasicInfo={};
+  //获取已经保存的信息并展示
+  var promise_PatientInfo = PatientInfo.GetPsPatientInfo(Storage.get("PatientID")); 
+  promise_PatientInfo.then(function(data)
+  { 
+     $scope.BasicInfo = data;
+    },function(err) {   
+  });
+
+   //修改患者基本信息确认框
+   $scope.showConfirm = function() {
+      $scope.confirmPopup = $ionicPopup.confirm({
+         title: '确认提交?',
+         template: '确定修改患者基本信息',
+         scope: $scope,
+         buttons: [
+            {text: '提交',
+             type: 'button-assertive',
+           　onTap: function(e) {
+               sendData = {
+                "PatientID": Storage.get("PatientID"),
+                "PatientName": $scope.BasicInfo.PatientName,
+                "Gender":  $scope.BasicInfo.Gender,
+                "Age": $scope.BasicInfo.Age,
+                "DOB": $scope.BasicInfo.DOB,
+                "BloodType": $scope.BasicInfo.BloodType,
+                "Allergy": $scope.BasicInfo.Allergy,
+                "ImageID": $scope.BasicInfo.ImageID,
+                "TroopType": $scope.BasicInfo.Troop,
+                "Job": $scope.BasicInfo.JOB,
+                "Rank": $scope.BasicInfo.Rank,
+                'UserID':$scope.BasicInfo.UserID,
+                'TerminalName':"",
+                "TerminalIP": ""
+              }
+            var promise =  PatientInfo.SetPatientInfo(sendData);
+            promise.then(function(data){ 
+                  if(data.result=="数据插入成功"){
+
+                    $ionicLoading.show({
+                       template: "保存成功",
+                       noBackdrop: true,
+                      duration: 1000,
+                    });
+                  }//if end 
+                },function(err) {  
+                   $ionicLoading.show({
+                     template:"保存失败" , //err.data.result
+                     noBackdrop: false,
+                     duration: 1000,
+                     hideOnStateChange: true
+                   }); 
+            }); //promise end
+          } //onTap end
+        },{
+            text: '<b>取消</b>',
+            type: 'button-positive',
+         }]
+      });
+   }
+                   
+}])
+
+//查看或编辑病人就诊记录
+.controller('VisitInfoCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo', function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo) {
+
+  $scope.goBack = function() {
+    $ionicHistory.goBack();
+  };
+  
+
+  //获取病人基本信息
+  var GetPatientbyPID= function(strPatientID)
+  {
+    var promise_PatientInfo = PatientInfo.GetPsPatientInfo(Storage.get("PatientID")); 
+    promise_PatientInfo.then(function(data)
+    { 
+        $scope.GetPatientbyPID = data;
+      },function(err) {   
+    });
+  }
+  //获取病人已填就诊信息
+  var GetPatientVisitInfo= function(strPatientID, strVisitNo)
+  {
+     var promise = PatientVisitInfo.GetPatientVisitInfo(strPatientID, strVisitNo); 
+     promise.then(function(data)
+     { 
+       $scope.visitInfo = data;
+       $scope.visitInfo.InjuryDateTime =new Date($scope.visitInfo.InjuryDateTime);
+       $scope.visitInfo.VisitDateTime =new Date($scope.visitInfo.VisitDateTime);
+      },function(err) {   
+    });      
+  }
+
+  $scope.$on('$ionicView.enter', function() { 
+      GetPatientbyPID(Storage.get("PatientID")); 
+      GetPatientVisitInfo(Storage.get("PatientID"), Storage.get("VisitNo"));
+  }); 
+
+  //$scope.visitInfo={"InjuryArea": "", "InjuryDateTime": new Date(), "VisitDateTime": new Date()};
+  //保存确认框
+  $scope.showConfirm = function() {
+    $scope.confirmPopup = $ionicPopup.confirm({
+           title: '确认提交?',
+           template: '请确认',
+           scope: $scope,
+           buttons: [
+              {text: '提交',
+               type: 'button-assertive',
+             　onTap: function(e) {
+                 var sendData = {
+                  "PatientID": Storage.get("PatientID"),
+                  "VisitNo":  Storage.get("VisitNo"),
+                  "Status": "1",
+                  "DeviceID": "",  //暂时留空
+                  "InjuryArea": $scope.visitInfo.InjuryArea, 
+                  "InjuryAreaGPS": "",
+                  "InjuryDateTime":$scope.visitInfo.InjuryDateTime,
+                  "VisitDateTime": $scope.visitInfo.VisitDateTime, 
+                  "EvaDateTime": "2016-03-07 19:07:19",
+                  "EvaBatchNo": "",
+                  "EvaDestination": "",
+                  "EvaTransportation": "",
+                  "EvaPosition": "",
+                  "ArriveDateTime": new Date("9999-12-31 23:59:59"),
+                  "ArrivePlace": "",
+                  "TriageDateTime": new Date("9999-12-31 23:59:59"),
+                  "TriageToDept": "",
+                  "UnitCode": "",
+                  "UserID": "",
+                  "TerminalName": "",
+                  "TerminalIP": ""
+                }
+              var promise =  PatientVisitInfo.UpdateInjury(sendData);
+              promise.then(function(data){ 
+                  if(data.result=="数据插入成功"){
+                      $ionicLoading.show({
+                       template: "保存成功",
+                       noBackdrop: true,
+                       duration: 700,
+                      });
+                  }
+                },function(err) {  
+                   $ionicLoading.show({
+                      template: "保存失败",
+                     noBackdrop: false,
+                     duration: 1000,
+                     hideOnStateChange: true
+                   }); 
+              }); 
+            }
+          },
+          {
+              text: '取消',
+              type: 'button-positive',
+          }]
+    });
+     
+  };
+     
+  //后送确认框         
+  $scope.showreservePop = function() {
+      if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!=''))
+      {
+            var myPopup = $ionicPopup.show({
+               templateUrl: 'templates/ambulance/evacuation.html',
+               title: '后送操作',
+               scope: $scope,
+               buttons: [
+                  {text: '确定',
+                   type: 'button-assertive',
+                 　onTap: function(e) {
+                      Evacuation();
+        　　　　    }
+                   },{
+                   text: '取消',
+                   type: 'button-positive',
+               }]
+           });
+
+      }
+      else
+      {
+        $ionicLoading.show({
+           template: '请先保存就诊记录',
+           noBackdrop: false,
+           duration: 1000,
+           hideOnStateChange: true
+        });
+
+      }
+  }
+
+    //后送操作
+  $scope.evacuationInfo={"EvaDateTime": new Date(), "EvaBatchNo":"", "EvaDestination":"",  "EvaTransportation":"",  "EvaPosition":""};
+     var Evacuation= function()
+     {
+
+        var sendData={
+          "PatientID": Storage.get("PatientID"),
+          "VisitNo": Storage.get("VisitNo"),
+          "Status": "2",
+          "EvaDateTime": $scope.evacuationInfo.EvaDateTime,
+          "EvaBatchNo": $scope.evacuationInfo.EvaBatchNo,
+          "EvaDestination": $scope.evacuationInfo.EvaDestination,
+          "EvaTransportation": $scope.evacuationInfo.EvaTransportation,
+          "EvaPosition": $scope.evacuationInfo.EvaPosition,
+          "UserID": "",
+          "TerminalName": "",
+          "TerminalIP": ""
+        }
+     var promise =  PatientVisitInfo.UpdateEva(sendData); 
+     promise.then(function(data){ 
+        if(data.result=="数据插入成功"){
+          $ionicLoading.show({
+            template: "后送完成！",
+            noBackdrop: false,
+            duration: 1000,
+            hideOnStateChange: true
+          });
+          setTimeout(function(){
+            $state.go('ambulance.list'); //回主页
+          },600);
+        }
+       },function(err) {   
+     }); 
+   } 
+     
+
+   //后送选项加载
+   //后送批次
+   var promise_EVABatchNos = MstType.GetMstType('EVABatchNo');
+    promise_EVABatchNos.then(function(data)
+       { 
+         $scope.EVABatchNos = data;
+        },function(err) {   
+    }); 
+
+   //后送方式
+   var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
+   promise_EvaTransportation.then(function(data)
+   { 
+      $scope.EvaTransportations = data;
+      },function(err) {   
+   });      
+
+  //后送体位
+   var promise_EvaPosition = MstType.GetMstType('EvaPosition');
+   promise_EvaPosition.then(function(data)
+   { 
+      $scope.EvaPositions = data;
+     },function(err) {   
+   });      
+
+   //后送地点 必须
+   var promise = MstType.GetMstType('EvaDestination');
+   promise.then(function(data)
+   { 
+     $scope.EvaDestinations = data;
+    },function(err) {   
+  });      
+
+}])
 //后送
 
 
 // --------急救人员-伤情与处置 [马志彬]----------------
-//伤情记录
+//伤情、处置记录
 
 //生理参数采集
 
-//处置
+
 
 
 // --------分流人员-列表、信息查看、分流 [张亚童]----------------
-//已后送病人列表
-
 //信息查看
+.controller('ViewEmergencyCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','Storage','PatientInfo', function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading, Storage, PatientInfo) {
 
+}])
 //分流
 
+;

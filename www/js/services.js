@@ -89,6 +89,27 @@ return{
       SetMobileDevice:{method:'POST', params:{route: 'SetMobileDevice'}, timeout: 10000}
     });
   };  
+  var PatientInfo = function () {
+    return $resource(CONFIG.baseUrl + ':path/:route', {path:'PatientInfo'},
+      {
+        SetPatientInfo: {method:'POST',params:{route: 'SetPatientInfo'}, timeout:10000},
+        GetNewPatientID: {method:'GET',params:{route: 'GetNewPatientID'}, timeout:10000},
+        GetPsPatientInfo: {method:'GET',params:{route: 'GetPsPatientInfo',strPatientID:'@strPatientID'}, timeout:10000},
+        CheckPatientID: {method:'POST',params:{route: 'CheckPatientID',PatientID:'@PatientID'}, timeout:10000},
+      });
+  };
+  var PatientVisitInfo = function () {
+    return $resource(CONFIG.baseUrl + ':path/:route', {path:'PatientVisitInfo'},
+      {
+        GetPatientsbyStatus: {method:'GET',isArray: true,params:{route: 'GetPatientsbyStatus', strStatus:'@strStatus'}, timeout:10000},
+        GetPatientbyPID: {method:'GET',params:{route: 'GetPatientbyPID', strPatientID:'@strPatientID'}, timeout:10000},
+        GetNewVisitNo: {method:'GET',params:{route: 'GetNewVisitNo', patientID:'@patientID'}, timeout:10000},
+        UpdateInjury: {method:'POST',params:{route: 'UpdateInjury'}, timeout:10000},
+        UpdateEva: {method:'POST',params:{route: 'UpdateEva'}, timeout:10000},
+        GetPatientVisitInfo: {method:'GET',params:{route: 'GetPatientVisitInfo', strPatientID:'@strPatientID',strVisitNo:'@strVisitNo'}, timeout:10000},
+        SetPsPatientVisitInfo: {method:'POST',params:{route: 'SetPsPatientVisitInfo'}, timeout:10000},
+      });
+  };
   serve.abort = function ($scope) {
   abort.resolve();
   $interval(function () {
@@ -96,52 +117,19 @@ return{
     serve.Users = Users(); 
     serve.MstType = MstType(); 
     serve.MobileDevice = MobileDevice(); 
+    serve.PatientInfo = PatientInfo(); 
+    serve.PatientVisitInfo = PatientVisitInfo(); 
     }, 0, 1);
   };
   serve.Users = Users();
   serve.MstType = MstType(); 
   serve.MobileDevice = MobileDevice(); 
+  serve.PatientInfo = PatientInfo(); 
+  serve.PatientVisitInfo = PatientVisitInfo(); 
   return serve;
 }])
 
-//示例
-.factory('VitalInfo', ['$q', 'Data', 'extraInfo',function($q, Data, extraInfo){
-  var self = this;
-
-  self.PostPatientVitalSigns = function(data){
-    var deferred = $q.defer();
-    Data.VitalInfo.PostPatientVitalSigns(data,
-      function(s){
-        deferred.resolve(s);
-      },function(e){
-        deferred.reject(e);
-      });
-    return deferred.promise;
-  };
-
-  self.VitalSigns = function (UserId,StartDate,EndDate,top,skip) {
-    var deferred = $q.defer();
-    Data.VitalInfo.VitalSigns({UserId:UserId,StartDate:StartDate,EndDate:EndDate,$top:top,$skip:skip}, function (data, headers) {
-      deferred.resolve(data);
-      }, function (err) {
-      deferred.reject(err);
-      });
-    return deferred.promise;
-  };
-  
-  self.GetLatestPatientVitalSigns = function (data) {
-    var deferred = $q.defer();
-    Data.VitalInfo.GetLatestPatientVitalSigns(data, function (data, headers) {
-      deferred.resolve(data);
-      }, function (err) {
-      deferred.reject(err);
-      });
-    return deferred.promise;
-  };
-  return self;
-}])
-
-//用户基本操作-登录、注册、修改密码、位置选择、个人信息维护 [熊嘉臻]
+//-------用户基本操作-登录、注册、修改密码、位置选择、个人信息维护-------- [熊嘉臻]
 .factory('UserInfo', ['$q', 'Data',function($q, Data){
   var self = this;
   var RevUserId="xxx";
@@ -244,11 +232,159 @@ return{
   return self;
 }])
 
-//急救人员-列表、新建、后送 [赵艳霞]
+//-------急救人员-列表、新建、后送--------- [赵艳霞]
+//获取字典表MstType数据
+.factory('MstType', ['$q','$http', 'Data', function($q,$http, Data){
+  var self = this;
 
-//急救人员-伤情与处置
+  self.GetMstType = function(Category){
+    var deferred = $q.defer();
+    Data.MstType.GetMstType({Category:Category},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  return self;
+}])
 
-//分流人员-列表、信息查看、分流
+//病人基本信息
+.factory('PatientInfo', ['$q','$http', 'Data', function($q,$http, Data){
+  var self = this;
+
+  self.SetPatientInfo = function(sendData){
+    var deferred = $q.defer();
+    Data.PatientInfo.SetPatientInfo(sendData,
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+
+  self.GetNewPatientID = function(){
+    var deferred = $q.defer();
+    Data.PatientInfo.GetNewPatientID(
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  self.GetPsPatientInfo = function(strPatientID){
+    var deferred = $q.defer();
+    Data.PatientInfo.GetPsPatientInfo({strPatientID:strPatientID},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  
+  self.CheckPatientID = function(strPatientID){
+    var deferred = $q.defer();
+    Data.PatientInfo.CheckPatientID({PatientID:strPatientID},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+
+  return self;
+}])
+
+//病人就诊信息
+.factory('PatientVisitInfo', ['$q','$http', 'Data', function($q,$http, Data){
+  var self = this;
+
+  self.GetPatientsbyStatus = function(strStatus){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.GetPatientsbyStatus({strStatus:strStatus},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  self.GetPatientbyPID = function(strPatientID){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.GetPatientbyPID({strPatientID:strPatientID},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  self.GetNewVisitNo = function(patientID){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.GetNewVisitNo({patientID:patientID},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+
+  self.UpdateInjury = function(sendData){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.UpdateInjury(sendData,
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+
+   self.UpdateEva = function(sendData){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.UpdateEva(sendData,
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+
+  self.GetPatientVisitInfo = function(strPatientID, strVisitNo){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.GetPatientVisitInfo({strPatientID:strPatientID, strVisitNo:strVisitNo},
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  
+  self.SetPsPatientVisitInfo = function(sendData){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.SetPsPatientVisitInfo(sendData,
+      function(data, headers){
+        deferred.resolve(data);
+      },function(err){
+        deferred.reject(err);
+      });
+    return deferred.promise;
+  };
+  
+  return self;
+}])
+
+//-------急救人员-伤情与处置-------- [马志彬]
+
+//-------分流人员-列表、信息查看、分流-------- [张亚童]
 
 
 

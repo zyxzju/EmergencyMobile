@@ -70,26 +70,35 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
         controller:'AmbulanceListCtrl'
         }
       }
-    })
-    // .state('ambulance.newPatient',{
-    //   url: '/newPatient',
-    //   views:{
-    //     'ambulance':{
-    //     templateUrl: 'templates/ambulance/newPatient.html',
-    //     // controller:'ambulancePatientCtrl'
-    //     }
-    //   }
-    // })
-        
+    })  
     .state('newPatient',{
       url: '/newPatient',
-        templateUrl: 'templates/ambulance/newPatient.html',
-        controller:'NewPatientCtrl'
+      templateUrl: 'templates/ambulance/newPatient.html',
+      cache: false,
+      controller:'NewPatientCtrl'
     })
-    .state('injury',{
-      url: '/injury',
-      templateUrl: 'templates/ambulance/injury.html',
-      controller:'InjuryCtrl'
+    .state('patientInfo',{
+      url: '/patientInfo',
+      templateUrl: 'templates/ambulance/patientInfo.html',
+      cache: false,
+      controller:'PatientInfoCtrl'
+    })
+    .state('newVisit',{
+      url: '/newVisit',
+      templateUrl: 'templates/ambulance/newVisit.html',
+      cache: false,
+      controller:'NewVisitCtrl'
+    })
+    .state('visitInfo',{
+      url: '/visitInfo',
+      templateUrl: 'templates/ambulance/visitInfo.html',
+      cache: false,
+      controller:'VisitInfoCtrl'
+    })
+    .state('viewEmergency',{
+      url: '/viewEmergency',
+      templateUrl: 'templates/ambulance/viewEmergency.html',
+      controller:'ViewEmergencyCtrl'
     })
     .state('vitalSign',{
       url: '/vitalSign',
@@ -115,11 +124,6 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
         // controller:'ambulancePatientCtrl'
         }
       }
-    })
-    .state('visitInfo',{
-      url: '/visitInfo',
-      templateUrl: 'templates/ambulance/visitInfo.html',
-      controller:'VisitInfoCtrl'
     })
     .state('triage',{
       url: '/triage',
