@@ -1112,10 +1112,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 
 }])
 
-// --------急救人员-伤情与处置 [马志彬]----------------
-//伤情、处置记录
 
-//生理参数采集
 
 
 // --------分流人员-列表、信息查看、分流 [张亚童]----------------
@@ -1200,5 +1197,578 @@ angular.module('controllers', ['ionic','ngResource','services'])
   };
  
 }])
+// --------急救人员-伤情与处置 [马志彬]----------------
+//伤情、处置记录
+//生理参数采集
+////---------------------伤情记录/处置，生理生化信息录入界面---------马志彬
+.controller('InjuryCtrl', ['$scope','$http','$ionicScrollDelegate','$ionicPlatform','bleService','$rootScope','Patients','$ionicPopup','$ionicHistory', 
+  function ($scope,$http,$ionicScrollDelegate,$ionicPlatform,bleService,$rootScope,Patients,$ionicPopup,$ionicHistory) {
+  $scope.head = 'HEAD';
 
+  //屏幕高度和宽度
+  var scrollWidth = document.body.clientWidth;
+  var scrollHeight = document.body.clientHeight;
+
+    var basicinfo = {"height":"0","width":"0","top":"0","left":"0"},
+      firstdirs = {"height":"0","width":"0","top":"0","left":"0"},
+      seconddirs = {"height":"0","width":"0","top":"0","left":"0"}//,
+      // Preview = {"height":"0","width":"0","top":"0","left":"0"};
+      console.log(scrollWidth);
+    //计算四个模块的位置
+    basicinfo.height = 100;
+    basicinfo.top = 43;
+
+    firstdirs.height = (scrollHeight - 190);
+    firstdirs.top = 143;
+    firstdirs.width = scrollWidth*2/5;
+
+    seconddirs.height = firstdirs.height;
+    seconddirs.top = firstdirs.top;
+    seconddirs.width = scrollWidth - firstdirs.width;
+    seconddirs.left = firstdirs.width;
+
+    // Preview.height = firstdirs.height/3;
+    // Preview.top = scrollHeight - Preview.height;
+
+    //配置四个模块的位置数据
+    document.getElementById("basicinfo").style.height=basicinfo.height+"px";
+    document.getElementById("basicinfo").style.top=basicinfo.top+"px";
+
+    document.getElementById("firstdirs").style.height=firstdirs.height+"px";
+    document.getElementById("firstdirs").style.width=firstdirs.width+"px";
+    document.getElementById("firstdirs").style.top=firstdirs.top+"px";
+
+    document.getElementById("seconddirs").style.height=seconddirs.height+"px";
+    document.getElementById("seconddirs").style.width=seconddirs.width+"px";
+    document.getElementById("seconddirs").style.top=seconddirs.top+"px";
+    document.getElementById("seconddirs").style.left=seconddirs.left+"px";
+
+    //////////////////////////默认选中生理信息
+    $scope.showPDA = true;
+    $scope.ifphysiological = true;//初始化显示生理信息采集
+    $scope.ifbiochemical=false;
+    // $scope.itemdetail = $scope.testdata.physiological;
+    //////////////////////////
+
+    $scope.selectResult=[];//伤情记录/处置选择结果
+    $scope.inputResult=[];//生理生化信息输入结果
+    $scope.bindble = '--';//生理ble绑定结果
+
+    $scope.catalog = {};//获取目录
+
+    Patients.GetVitalSignDictItems().then(
+    function(s){
+      for(var i=0;i<s.length;i++)
+      {
+        $scope.catalog[s[i].Category] = s[i].Item;
+      }
+      $scope.itemdetail = $scope.catalog.Physical;
+      console.log($scope.catalog);
+    },function(e){
+      console.log(e);
+    })
+    Patients.GetEmergencyDictItems().then(
+     function(s){
+       for(var i=0;i<s.length;i++)
+       {
+         $scope.catalog[s[i].Category] = s[i].Item;
+       }
+       console.log($scope.catalog);
+     },function(e){
+       console.log(e);
+    })
+    $scope.onClickBackward = function(){
+      $ionicHistory.goBack();
+    } 
+      $scope.firstdirs = [//左侧目录的数据
+      [   "InjuryPart",//伤情记录
+          "InjuryClass",
+          "InjuryType",
+          "InjuryComplication"
+      ],
+      [
+          "EmergencySurgery",//伤情处理
+          "TreatmentOutLine",
+          "AntiInfection",
+          "AntiShock"
+      ],
+      [
+        'Physical',//检测信息
+        'Biochemical'
+      ]
+      ];
+    $scope.items = {//左侧目录详细数据，filters.js文件中有过滤信息
+      "InjuryPart":{Style:{}},
+        "InjuryClass":{Style:{}},
+        "InjuryType":{Style:{}},
+        "InjuryComplication":{Style:{}},
+        "InjuryExtent":{Style:{}},
+        "EmergencySurgery":{Style:{}},
+        "InjuryOutLine":{Style:{}},
+        "WarWound":{Style:{}},
+        "CarePathway":{Style:{}},
+        "TreatmentOutLine":{Style:{}},
+        "AntiInfection":{Style:{}},
+        "AntiShock":{Style:{}},
+        "Physical":{Style:{'background-color':'#BEDBD7'}},
+        "Biochemical":{Style:{}}
+    };
+    $scope.lastchooseitem = 'Physical';//记录上一次选中的左侧目录信息，如 physiological
+      $scope.chooseitem = function(ci){
+        console.log(ci);
+        if(ci!=$scope.lastchooseitem)//防止重复点击同一个目录
+        {
+          switch(ci)
+          {
+            case "Physical"://这两个界面放的是输入框等，因此加以区分
+            {
+              $scope.showPDA = true;
+              $scope.ifphysiological = true;
+              $scope.ifbiochemical=false;
+              $scope.itemdetail = $scope.catalog.Physical;//获取所选目录详细信息进行显示
+              break;
+            }
+            case "Biochemical":
+            {
+              $scope.showPDA = true;
+              $scope.ifbiochemical = true;
+              $scope.ifphysiological=false;
+              $scope.itemdetail = $scope.catalog.Biochemical;
+              break;
+            }
+            default://伤情记录和伤情处理部分都是checkbox
+            {
+              $scope.showPDA = false;
+              $scope.itemdetail = $scope.catalog[ci];
+              break;
+            }
+          }
+          $scope.items[ci].Style={'background-color':'#BEDBD7'};//设置所选目录的背景色
+          if($scope.lastchooseitem!='')$scope.items[$scope.lastchooseitem].Style={};
+          $scope.lastchooseitem=ci;//修改上次所选目录
+        }     
+      };
+      $scope.onselectchange = function(ci){//每次选中或取消checkbox后调用，直接把值汇总
+        console.log(ci);
+        if(ci.ItemName=="其他")
+        {
+          $ionicScrollDelegate.$getByHandle('myhand').resize();
+          //如果选的是其他则把页面滚到底部，方便显示输入框
+          $ionicScrollDelegate.$getByHandle('myhand').scrollBottom(true);
+        }
+        //
+        if(ci.status==true){//选中了某一项，直接把该项添加到选择结果中
+          var l = $scope.selectResult.push({
+            "ItemCategory": $scope.lastchooseitem,
+            "ItemCode": ci.ItemCode,
+          "ItemValue": ci.ItemName
+        });
+        if(ci.ItemName=='其他')$scope.selectResult[l-1].ItemValue = ci.value;//如果选中的是其他，则把其他中原有的值替换选择结果中该项的值
+        }else{
+          for(var i=0;i<$scope.selectResult.length;i++)//取消选择某项后将该项从选择结果中删除
+          {
+            if(ci.ItemCode==$scope.selectResult[i].ItemCode//只有当ItemCode和ItemCategory都匹配时删除
+              &&$scope.lastchooseitem==$scope.selectResult[i].ItemCategory)
+            {
+              $scope.selectResult.splice(i,1);
+            }
+          }
+        }
+        $scope.catalog[$scope.lastchooseitem]=$scope.itemdetail;
+        console.log($scope.selectResult);
+
+      }
+      $scope.OnFocus = function(i)//当输入框获得焦点是调用，i-所选输入框的索引
+      {
+        document.getElementById('mytext2').focus();//使通用输入框获得焦点
+        $scope.inputindex = i;//存储输入框索引
+        console.log(i);
+        if(i!=undefined)
+          $scope.textarea2value = $scope.itemdetail[i].value;//通用输入框获得所选输入框的初始值
+        else
+          $scope.textarea2value = $scope.itemdetail.slice(-1)[0].value;
+        var keyboardHeight = window.localStorage['keyboardHeight'];//获取键盘高度
+        $scope.mytext2height = {'height':scrollHeight - keyboardHeight-43+"px"};//设置通用输入框高度
+        $scope.mytext2textareaheight = {"height":scrollHeight - keyboardHeight - 57+"px"};
+      }
+
+      $scope.doneotherinfo = function(){//完成通用输入框时调用
+        $scope.mytext2height = {'height':0+"px"};
+        $scope.mytext2textareaheight = {"height":0+"px"};
+      }
+
+      $scope.loosecurse = function(){//通用输入框失去焦点时调用
+        console.log('loosecurse');
+        console.log($scope.lastchooseitem);
+        if($scope.inputindex!=undefined)//undefined表示通用输入框操作的是生理，生化参数输入界面
+        {
+          $scope.itemdetail[$scope.inputindex].value = $scope.textarea2value;//将通用输入框的值赋给所选输入框
+
+          var hasitem = false;//判断生理生化参数输入结果中是否有当前正在输入的项
+          for(var i=0;i<$scope.inputResult.length;i++){
+            if($scope.inputResult[i].ItemCategory==$scope.lastchooseitem&&
+              $scope.inputResult[i].ItemCode==$scope.itemdetail[$scope.inputindex].ItemCode)
+            {//如果有，判断当前的输入是删除值还是更新值
+              if($scope.textarea2value=='')//输入为空表示要删除
+            {
+              $scope.inputResult.splice(i,1);
+            }
+              else{//输入不为空则更新
+                $scope.inputResult[i].ItemValue=$scope.textarea2value;
+              }
+              hasitem=true;//为true表示有当前正在输入的项
+            }
+          }
+          if(!hasitem)//没有当前正在输入的项时表示一定会增加新的项在数组末尾
+          {
+            if($scope.textarea2value!=''&&$scope.textarea2value!=undefined)//输入不为空则增加
+            {
+              $scope.inputResult.push({
+                "ItemCategory": $scope.lastchooseitem,
+                "ItemCode": $scope.itemdetail[$scope.inputindex].ItemCode,
+              "ItemValue": $scope.textarea2value
+            });
+            }
+          }
+        }
+        else//表示通用输入框操作的是伤情记录/处置中的某个其他输入框
+        {
+          $scope.itemdetail.slice(-1)[0].value = $scope.textarea2value;
+          for(var i=0;i<$scope.selectResult.length;i++)
+          {
+            if($scope.selectResult[i].ItemCode==$scope.itemdetail.slice(-1)[0].ItemCode
+              &&$scope.lastchooseitem==$scope.selectResult[i].ItemCategory)
+            {
+              $scope.selectResult[i].ItemValue=$scope.textarea2value;//肯定是选中了这个其他选项，必然要更新结果
+            }
+          }
+        }
+        console.log($scope.itemdetail);
+        console.log($scope.catalog);
+        console.log($scope.selectResult);
+        console.log($scope.inputResult);
+      }
+      $scope.showdeviceoption_b = false;//控制显示生理/生化中的读取设备按钮详细信息
+      $scope.clickshowdeviceoption = function(device){
+        if(ionic.Platform.platform()!='win32'){
+          ble.isEnabled(function(){
+
+          }, function(){
+            console.log("ble is not enabled");
+            $scope.ble_enable();
+          });
+        }
+        if(device=='Physical')
+        {
+          $scope.showdeviceoption_p = ~$scope.showdeviceoption_p;
+        }else if(device=='Biochemical')
+        {
+          $scope.showdeviceoption_b = ~$scope.showdeviceoption_b;
+        }
+      }
+      var visitNo = window.localStorage['VisitNo'];
+      var Userid = window.localStorage['USERID'];
+      var patientID = window.localStorage['PatientID'];
+      var postVitalSigndata = {
+        ID:{PatientID:patientID,VisitNo:visitNo},
+        postdata:[]
+      };
+      var postEmergencydata = {
+        ID:{PatientID:patientID,VisitNo:visitNo},
+        postdata:[]
+      };
+      $scope.saveall = function(){
+
+        postVitalSigndata.postdata = $scope.inputResult;
+        postEmergencydata.postdata = $scope.selectResult;
+
+        for(var i=0;i<postVitalSigndata.postdata.length;i++)
+        {
+          postVitalSigndata.postdata[i]["UserId"] = Userid;
+          postVitalSigndata.postdata[i]["TerminalName"] = "sample string 5";
+          postVitalSigndata.postdata[i]["TerminalIP"] = "sample string 6";
+        }
+        for(var i=0;i<postEmergencydata.postdata.length;i++)
+        {
+          postEmergencydata.postdata[i]["UserId"] = Userid;
+          postEmergencydata.postdata[i]["TerminalName"] = "sample string 5";
+          postEmergencydata.postdata[i]["TerminalIP"] = "sample string 6";
+        }
+        console.log(postVitalSigndata);
+        console.log(postEmergencydata);
+        if(postVitalSigndata.postdata.length>0)
+        {
+          Patients.PostVitalSign(postVitalSigndata).then(
+            function(s){
+            console.log(s.result);
+          },function(e){
+            console.log(e);
+          });
+        }
+        if(postEmergencydata.postdata.length>0)
+        {
+          Patients.PostEmergency(postEmergencydata).then(
+            function(s){
+            console.log(s.result);
+          },function(e){
+            console.log(e);
+          });
+        }
+      }
+      // A confirm dialog
+    $scope.showConfirm = function() {
+      console.log($scope.blescanlist);
+      var confirmPopup = $ionicPopup.confirm({
+        title: '选择设备',
+        scope:$scope,
+        template:'<ion-list><a class="item item-icon-right" href="#" ng-repeat="item in blescanlist"ng-click="selectbledevice($index)"><i class="icon ion-android-done" ng-if="item.showconnecticon"></i>{{item.name}}</a></ion-list>'
+      }).then(function(res) {
+        if(res) {
+          console.log('You are sure');
+          for(var i=0;i<$scope.blescanlist.length;i++)
+          {
+            if($scope.blescanlist[i].showconnecticon == true)
+            {
+                $scope.ble_connect(i);
+            }
+          }
+        } else {
+          console.log('You are not sure');
+        }
+      });
+    };
+    $scope.selectbledevice = function(index){
+      console.log(index);
+      console.log($scope.blescanlist);
+      for(var i=0;i<$scope.blescanlist.length;i++)
+      {
+        $scope.blescanlist[i].showconnecticon = false;
+      }
+      $scope.blescanlist[index].showconnecticon = true;
+      console.log($scope.blescanlist);
+    }
+
+////////////////////////for ble
+    $ionicPlatform.ready(function(){
+    if(ionic.Platform.platform()!='win32')
+    {
+      console.log(ionic.Platform.platform());
+
+      console.log($scope.datafromdevice);
+      $scope.blescanlist = [];
+      ble.startScan([], function(success){
+          console.log('ble-success');
+          $rootScope.$apply(function(){
+            var hashavedevice = false;
+            for(var i=0;i<$scope.blescanlist.length;i++)
+            {
+              if(success.id==$scope.blescanlist[i].id)
+                hashavedevice = true;
+
+            }
+            if(!hashavedevice)
+            {
+              var length = $scope.blescanlist.push(success);
+              $scope.blescanlist[length-1].index = length-1;
+              $scope.blescanlist[length-1].showconnecticon = false;
+            }
+          });
+          console.log($scope.blescanlist);
+        }, function(err){
+          console.log(err);
+    });
+    $scope.ble_connect = function(index){
+      var device_id = $scope.blescanlist[index].id;
+      console.log(device_id);
+      ble.connect(device_id, function(connectSuccess){
+
+        window.localStorage['blemac'] = angular.toJson(connectSuccess);//angular.fromJson()
+        $rootScope.$apply(function(){
+          $scope.bindble = connectSuccess.name;
+                });
+                console.log($scope.blescanlist);
+      }, function(connectFailure){
+        $rootScope.$apply(function(){
+          $scope.bindble = '绑定失败';
+          console.log(index);
+          console.log($scope.blescanlist[index].showconnecticon)
+          $scope.blescanlist[index].showconnecticon = false;
+                });
+                console.log($scope.blescanlist);
+      });
+    };
+    $scope.ble_disconnect = function(device_id){
+      ble.disconnect(device_id, function(disconnectSuccess){
+        console.log(disconnectSuccess);
+      }, function(disconnectfailure){
+        console.log(disconnectfailure);
+      });
+    }
+    $scope.ble_enable = function(){
+      ble.enable(function(enablesuccess){
+        console.log('enablesuccess');
+
+          ble.startScan([], function(success){
+          console.log('ble-success');
+          $rootScope.$apply(function(){
+              var hashavedevice = false;
+              for(var i=0;i<$scope.blescanlist.length;i++)
+              {
+                if(success.id==$scope.blescanlist[i].id)
+                  hashavedevice = true;
+
+              }
+              if(!hashavedevice)
+              {
+                var length = $scope.blescanlist.push(success);
+                $scope.blescanlist[length-1].index = length-1;
+                $scope.blescanlist[length-1].showconnecticon = false;
+              }
+          });
+          console.log($scope.blescanlist);
+        }, function(err){
+          console.log(err);
+        });
+        $rootScope.$apply(function(){
+          $scope.bleisdisabled = false;
+                });
+      }, function(enablefailure){
+        console.log(enablefailure);
+      });
+    };
+  } 
+  })
+  $scope.starttimesync = function(){
+    console.log('clickstarttimesync');
+    var bledevice = angular.fromJson(window.localStorage['blemac']);
+    ble.connect(bledevice.id, function(connectSuccess){
+      console.log(connectSuccess);
+      ble_startNotification();
+      $scope.step = 0;
+      ble_write($scope.step);
+    }, function(connectFailure){
+      console.log(connectFailure);
+    });
+  }
+  $scope.receivecurrentdata = function(){
+    console.log('clickreceivecurrentdata');
+    $scope.datafromdevice = new Uint8Array(0);
+    var bledevice = angular.fromJson(window.localStorage['blemac']);
+    ble.connect(bledevice.id, function(connectSuccess){
+      console.log(connectSuccess);
+      ble_startNotification();
+      $scope.step = 2;
+      ble_write($scope.step);
+    }, function(connectFailure){
+      console.log(connectFailure);
+    });
+  }
+  var ble_startNotification = function(){
+    var bledevice = angular.fromJson(window.localStorage['blemac']);
+    ble.startNotification(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic,function(buffer){
+        console.log('readsuccess');
+        var data = new Uint8Array(buffer);
+        console.log(data);
+        console.log(data.length);
+
+
+        if(data.length == 4)
+        {
+          if(data[2] == 0x00)
+          {
+            $rootScope.$apply(function(){
+              if($scope.step==0)//if$scope.step==2表示设备成功接收发送单次数据命令，准备发送数据
+              {
+                setTimeout(function(){
+                  $scope.step++;
+                  ble_write($scope.step)
+                },2000);
+              }
+                    });
+          }else
+          { }
+        }else{
+          //此处判断接收的数据信息是否正确，正确则发送ble_write(3);mastercomputerrespond指令并取消监听完成获取数据
+          $rootScope.$apply(function(){
+            console.log($scope.step);
+            if($scope.step==2)
+            {
+              var c = new Uint8Array($scope.datafromdevice.length+data.length);
+              c.set($scope.datafromdevice);
+              c.set(data,$scope.datafromdevice.length);
+              $scope.datafromdevice = c;
+              if($scope.datafromdevice.length == 34)
+              {
+                setTimeout(function(){
+                  $scope.step++;
+                  ble_write($scope.step);
+                  ble.stopNotification(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic,
+                    function(){console.log("stopNotifications");},
+                    function(){console.log("stopNotificatione");});
+                },2000);
+              }
+              console.log($scope.datafromdevice); 
+            }else{
+              //此处应该取消监听
+            }
+                  });
+        }
+      },function(err){
+        console.log('readerr');
+        console.log(err);
+        $rootScope.$apply(function(){
+          $scope.step = 0;
+          ble_write(0);
+                });
+      });
+  }
+  var ble_write = function(step){
+    var bledevice = angular.fromJson(window.localStorage['blemac']);
+    if(ionic.Platform.platform()!='win32')
+    {
+      switch(step){
+        case 0://时间同步命令
+          ble.writeWithoutResponse(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic, bleService.timesynccommand(),
+            function(s){
+              console.log('timesynccommandsuccess');
+              console.log(s);
+            },
+            function(err){
+              console.log(err);
+            });
+          break;
+        case 1://发送时间数据
+          ble.writeWithoutResponse(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic, bleService.timesyncdata(),
+            function(){
+              console.log('timesyncdatasuccess');
+              console.log(new Uint8Array(bleService.timesyncdata()));
+            },
+            function(err){
+              console.log(err);
+            });
+          break;
+        case 2://发送单次数据传送命令
+          ble.writeWithoutResponse(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic, bleService.currentdatacommand(),
+            function(){
+              console.log('currentdatacommandsuccess');
+            },
+            function(err){
+              console.log(err);
+            });
+          break;
+        case 3://返回接收数据成功
+          ble.writeWithoutResponse(bledevice.id, bledevice.services[2], bledevice.characteristics[6].characteristic, bleService.mastercomputerrespond(),
+            function(){
+              console.log('mastercomputerrespondsuccess');
+            },
+            function(err){
+              console.log(err);
+            });
+          break;
+      }
+    }
+  }
+/////////////////////////ble-endv
+
+}])
 ;

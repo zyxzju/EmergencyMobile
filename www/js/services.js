@@ -131,13 +131,26 @@ return{
   var VitalSignInfo = function(){
     return $resource(CONFIG.baseUrl + ':path/:route', {path:'VitalSignInfo'}, {
       GetVitalSignInfos: {method:'GET', params:{route:'GetVitalSignInfos', PatientID:'@PatientID', VisitNo:'@VisitNo'}, isArray:true, timeout:10000},
+      POSTVitalSign:{method:'POST', params:{route: 'SetVitalSign',PatientID:'@PatientID',VisitNo:'@VisitNo'}, timeout: 10000}
     });
+  };
+  var MstVitalSignDict = function(){
+      return $resource(CONFIG.baseUrl + ':path/:route',{path:'MstVitalSignDict'},{
+          GETVitalSignDictItems:{method:'GET',isArray:true, params:{route: 'GetAllVitalSignDictItems'}, timeout: 10000}
+      });
   };
   var EmergencyInfo = function(){
     return $resource(CONFIG.baseUrl + ':path/:route', {path:'EmergencyInfo'}, {
       GetEmergencyInfos: {method:'GET', params:{route:'GetEmergencyInfos', PatientID:'@PatientID', VisitNo:'@VisitNo'}, isArray:true, timeout:10000},
+      POSTEmergency:{method:'POST', params:{route: 'SetEmergency',PatientID:'@PatientID',VisitNo:'@VisitNo'}, timeout: 10000}
     });
   };
+  var MstEmergencyItemDict = function(){
+      return $resource(CONFIG.baseUrl + ':path/:route',{path:'MstEmergencyItemDict'},{
+          GETEmergencyDictItems:{method:'GET',isArray:true, params:{route: 'GetAllMstEmergencyItemDict'}, timeout: 10000}
+      });
+  };
+
   serve.abort = function ($scope) {
   abort.resolve();
   $interval(function () {
@@ -149,6 +162,8 @@ return{
     serve.PatientVisitInfo = PatientVisitInfo(); 
     serve.VitalSignInfo = VitalSignInfo();
     serve.EmergencyInfo = EmergencyInfo();
+    serve.MstVitalSignDict = MstVitalSignDict();
+    serve.MstEmergencyItemDict = MstEmergencyItemDict();
     }, 0, 1);
   };
   serve.Users = Users();
@@ -158,6 +173,8 @@ return{
   serve.PatientVisitInfo = PatientVisitInfo(); 
   serve.VitalSignInfo = VitalSignInfo();
   serve.EmergencyInfo = EmergencyInfo();
+  serve.MstVitalSignDict = MstVitalSignDict();
+  serve.MstEmergencyItemDict = MstEmergencyItemDict();
   return serve;
 }])
 
@@ -422,7 +439,7 @@ return{
   return self;
 }])
 
-//-------急救人员-伤情与处置-------- [马志彬]
+
 
 //-------分流人员-列表、信息查看、分流-------- [张亚童]
 .factory('VitalSignInfo', ['$q', '$http', 'Data', function( $q, $http, Data ){
@@ -454,4 +471,141 @@ return{
   };
   return self;
 }])
+//-------急救人员-伤情与处置-------- [马志彬]
+////////////蓝牙(BLE)相关服务///马志彬-----------start
+.factory('bleService', function () {
+        return {
+            stringToBytes: function(string) {
+                var array = new Uint8Array(string.length);
+                for (var i = 0, l = string.length; i < l; i++) {
+                    array[i] = string.charCodeAt(i);
+                }
+                return array;
+            },
+            bytesToString: function(buffer){
+                return String.fromCharCode.apply(null, new Uint8Array(buffer));
+            },
+            timesynccommand:function(){
+                var Timesynccommand = new Uint8Array(4);
+                Timesynccommand[0] = 0x00;//起始标志
+                Timesynccommand[1] = 0x01;//上位机编号
+                Timesynccommand[2] = 0x80;//命令
+                Timesynccommand[3] = 0x88;//结束码
+                return Timesynccommand.buffer;
+            },
+            timesyncdata:function(){
+                var Timesyncdata = new Uint8Array(10);
+                Timesyncdata[0] = 0x00;//起始标志
+                Timesyncdata[1] = 0xF1;//上位机编号
+                Timesyncdata[2] = 0x00;//年（2xxx）
+                Timesyncdata[3] = 0x00;//月
+                Timesyncdata[4] = 0x00;//日
+                Timesyncdata[5] = 0x00;//时
+                Timesyncdata[6] = 0x00;//分
+                Timesyncdata[7] = 0x00;//秒
+                Timesyncdata[8] = 0x88;//校验和
+                Timesyncdata[9] = 0x88;//结束码
+                var date = new Date();
+                Timesyncdata[2] = date.getFullYear()%1000;
+                Timesyncdata[3] = date.getMonth()+1;
+                Timesyncdata[4] = date.getDate();
+                Timesyncdata[5] = date.getHours();
+                Timesyncdata[6] = date.getMinutes();
+                Timesyncdata[7] = date.getSeconds();
+                // Timesyncdata[8] = Timesyncdata[1]+Timesyncdata[0]+Timesyncdata[2]+Timesyncdata[3]+Timesyncdata[4]+Timesyncdata[5]+Timesyncdata[6]+Timesyncdata[7];
+
+                return Timesyncdata.buffer;
+            },
+            currentdatacommand:function(){
+                var Currentdatacommand = new Uint8Array(4);
+                Currentdatacommand[0] = 0x00;//起始标志
+                Currentdatacommand[1] = 0x01;//上位机编号
+                Currentdatacommand[2] = 0x81;//当前数据传送
+                Currentdatacommand[3] = 0x88;//结束码
+
+                return Currentdatacommand.buffer;
+            },
+            multitudedatacommand:function(){
+                var Multitudedatacommand = new Uint8Array(5);
+                Multitudedatacommand[0] = 0x00;//起始标志
+                Multitudedatacommand[1] = 0x01;//上位机编号
+                Multitudedatacommand[2] = 0x82;//N个数据传送
+                Multitudedatacommand[3] = 0x46;//传送数据的组数（N）
+                Multitudedatacommand[4] = 0x88;//结束码
+
+                return Multitudedatacommand.buffer;
+            },
+            mastercomputerrespond:function(status){//默认成功，failed-失败
+                var Mastercomputerrespond = new Uint8Array(4);
+                Mastercomputerrespond[0] = 0x00;//起始标志
+                Mastercomputerrespond[1] = 0x01;//上位机编号
+                Mastercomputerrespond[2] = 0x00;//应答值(0x00-接收成功/0x01-接收失败)
+                Mastercomputerrespond[4] = 0x88;//结束码
+
+                if(status=='failed')Mastercomputerrespond[2] = 0x01;
+
+                return Mastercomputerrespond.buffer;
+            }
+        };
+    })
+.factory('Patients',['Data','$q','$resource','CONFIG',function(Data,$q,$resource,CONFIG){
+        var self = this;
+        self.PostVitalSign = function(Postdata){
+
+            var deferred = $q.defer();
+            Data.VitalSignInfo.POSTVitalSign(Postdata.ID,Postdata.postdata,
+                function (s) {
+                    deferred.resolve(s);
+                },
+                function (e) {
+                    deferred.reject(e);
+                }
+            );
+            return deferred.promise;        
+        },
+        self.GetVitalSignDictItems = function(){
+
+            var deferred = $q.defer();
+
+            Data.MstVitalSignDict.GETVitalSignDictItems(
+                function (s) {
+                    deferred.resolve(s);
+                },
+                function (e) {
+                    deferred.reject(e);
+                }
+            );
+            return deferred.promise;        
+        },
+        self.PostEmergency = function(Postdata){
+
+            var deferred = $q.defer();
+
+            Data.EmergencyInfo.POSTEmergency(Postdata.ID,Postdata.postdata,
+                function (s) {
+                    deferred.resolve(s);
+                },
+                function (e) {
+                    deferred.reject(e);
+                }
+            );
+            return deferred.promise;        
+        },
+        self.GetEmergencyDictItems = function(){
+
+            var deferred = $q.defer();
+
+            Data.MstEmergencyItemDict.GETEmergencyDictItems(
+                function (s) {
+                    deferred.resolve(s);
+                },
+                function (e) {
+                    deferred.reject(e);
+                }
+            );
+            return deferred.promise;        
+        }
+        return self;
+    }])
+  ///////////////////////////////////////////////-----end
 ;
