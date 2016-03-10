@@ -35,7 +35,6 @@ angular.module('services', ['ionic','ngResource'])
 //公用函数
 .factory('Common', ['Storage', function (Storage) {
 return{
-
     // 获取RevisonInfo信息 Common.postInformation().revUserId
     postInformation:function(){
       var postInformation={};
@@ -55,8 +54,26 @@ return{
       }
       postInformation.DeviceType = 2;
       return postInformation;
+    },
+    //获取到s的当前时间
+    DateTimeNow:function(){
+      var date = new Date();
+      var dt={};
+      dt.year=date.getFullYear().toString();
+      dt.year.length==1?dt.year='0'+dt.year:dt.year=dt.year;
+      dt.month=(date.getMonth()+1).toString();
+      dt.month.length==1?dt.month='0'+dt.month:dt.month=dt.month;
+      dt.day=date.getDate().toString();
+      dt.day.length==1?dt.day='0'+dt.day:dt.day=dt.day;
+      dt.hour=date.getHours().toString();
+      dt.hour.length==1?dt.hour='0'+dt.hour:dt.hour=dt.hour;
+      dt.minute=date.getMinutes().toString();
+      dt.minute.length==1?dt.minute='0'+dt.minute:dt.minute=dt.minute;
+      dt.second=date.getSeconds().toString();
+      dt.second.length==1?dt.second='0'+dt.second:dt.second=dt.second;
+      dt.fullTime=dt.year+'-'+dt.month+'-'+dt.day+' '+dt.hour+':'+dt.minute+':'+dt.second;
+      return dt;
     }
-
   }
 }])
 
@@ -108,7 +125,18 @@ return{
         UpdateEva: {method:'POST',params:{route: 'UpdateEva'}, timeout:10000},
         GetPatientVisitInfo: {method:'GET',params:{route: 'GetPatientVisitInfo', strPatientID:'@strPatientID',strVisitNo:'@strVisitNo'}, timeout:10000},
         SetPsPatientVisitInfo: {method:'POST',params:{route: 'SetPsPatientVisitInfo'}, timeout:10000},
+        UpdateTriage: {method:'POST', params:{route:'UpdateTriage'}, timeout:10000},
       });
+  };
+  var VitalSignInfo = function(){
+    return $resource(CONFIG.baseUrl + ':path/:route', {path:'VitalSignInfo'}, {
+      GetVitalSignInfos: {method:'GET', params:{route:'GetVitalSignInfos', PatientID:'@PatientID', VisitNo:'@VisitNo'}, isArray:true, timeout:10000},
+    });
+  };
+  var EmergencyInfo = function(){
+    return $resource(CONFIG.baseUrl + ':path/:route', {path:'EmergencyInfo'}, {
+      GetEmergencyInfos: {method:'GET', params:{route:'GetEmergencyInfos', PatientID:'@PatientID', VisitNo:'@VisitNo'}, isArray:true, timeout:10000},
+    });
   };
   serve.abort = function ($scope) {
   abort.resolve();
@@ -119,6 +147,8 @@ return{
     serve.MobileDevice = MobileDevice(); 
     serve.PatientInfo = PatientInfo(); 
     serve.PatientVisitInfo = PatientVisitInfo(); 
+    serve.VitalSignInfo = VitalSignInfo();
+    serve.EmergencyInfo = EmergencyInfo();
     }, 0, 1);
   };
   serve.Users = Users();
@@ -126,6 +156,8 @@ return{
   serve.MobileDevice = MobileDevice(); 
   serve.PatientInfo = PatientInfo(); 
   serve.PatientVisitInfo = PatientVisitInfo(); 
+  serve.VitalSignInfo = VitalSignInfo();
+  serve.EmergencyInfo = EmergencyInfo();
   return serve;
 }])
 
@@ -378,14 +410,48 @@ return{
       });
     return deferred.promise;
   };
-  
+  self.UpdateTriage = function(PatientID, VisitNo, Status, TriageDateTime, TriageToDept){
+    var deferred = $q.defer();
+    Data.PatientVisitInfo.UpdateTriage({PatientID:PatientID, VisitNo:VisitNo, Status:Status, TriageDateTime:TriageDateTime, TriageToDept:TriageToDept, UserID:'', TerminalName:'', TerminalIP:''}, function(data, headers){
+      deferred.resolve(data);
+    }, function(err){
+      deferred.reject(err);
+    });
+    return deferred.promise;
+  };
   return self;
 }])
 
 //-------急救人员-伤情与处置-------- [马志彬]
 
 //-------分流人员-列表、信息查看、分流-------- [张亚童]
+.factory('VitalSignInfo', ['$q', '$http', 'Data', function( $q, $http, Data ){
+  var self = this;
+  // 获取某一病人体征信息（供分流使用）--张桠童
+  self.GetVitalSignInfos = function(PatientID, VisitNo){
+    var deferred = $q.defer();
+    Data.VitalSignInfo.GetVitalSignInfos({PatientID:PatientID, VisitNo:VisitNo}, function(data, headers){
+      deferred.resolve(data);
+    }, function(err){
+      deferred.reject(err);
+    });
+    return deferred.promise;
+  };
+  return self;
+}])
 
-
-
+.factory('EmergencyInfo', ['$q', '$http', 'Data', function( $q, $http, Data ){
+  var self = this;
+  // 获取某一病人伤情/处置/等级（供分流使用）--张桠童
+  self.GetEmergencyInfos = function(PatientID, VisitNo){
+    var deferred = $q.defer();
+    Data.EmergencyInfo.GetEmergencyInfos({PatientID:PatientID, VisitNo:VisitNo}, function(data, headers){
+      deferred.resolve(data);
+    }, function(err){
+      deferred.reject(err);
+    });
+    return deferred.promise;
+  };
+  return self;
+}])
 ;

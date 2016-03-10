@@ -3,7 +3,7 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova'])
+angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova','filters'])
 
 .run(function($ionicPlatform, $rootScope,Storage) {
   $ionicPlatform.ready(function() {
@@ -98,37 +98,13 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
     .state('viewEmergency',{
       url: '/viewEmergency',
       templateUrl: 'templates/ambulance/viewEmergency.html',
+      cache: false,
       controller:'ViewEmergencyCtrl'
     })
     .state('vitalSign',{
       url: '/vitalSign',
       templateUrl: 'templates/ambulance/vitalSign.html',
       controller:'VitalSignCtrl'
-    })
-    .state('treatment',{
-      url: '/treatment',
-      templateUrl: 'templates/ambulance/treatment.html',
-      controller:'TreatmentCtrl'
-    })
-    .state('evacuation',{
-      url: '/evacuation',
-      templateUrl: 'templates/ambulance/evacuation.html',
-      controller:'EvacuationCtrl'
-    })
-    //分流人员
-    .state('ambulance.list1',{
-      url: '/list1',
-      views:{
-        'ambulance':{
-        templateUrl: 'templates/ambulance/list1.html',
-        // controller:'ambulancePatientCtrl'
-        }
-      }
-    })
-    .state('triage',{
-      url: '/triage',
-      templateUrl: 'templates/ambulance/triage.html',
-      controller:'TriageCtrl'
     })
     .state('ambulance.mine',{
       url: '/mine',
