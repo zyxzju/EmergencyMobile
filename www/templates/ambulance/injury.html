@@ -80,6 +80,18 @@
 						<span class="input-label">{{item.ItemName}}</span>
 							<input type="text" ng-model="item.value" ng-focus="OnFocus($index)"></input>
 					</label>
+					<div class="item item-button-right" style="font-size: 15px;">
+						战伤计分:&nbsp{{scoring}}&nbsp分
+						<button class="button button-positive" ng-click="showdescribe()">
+							说明
+						</button>
+					</div>
+					<ion-item style="word-break:break-all;white-space:normal">
+						神志昏迷等级，按一下3项判定得分之和进行区分：<br/>
+						(1).睁眼动作：自动睁眼4分，呼唤睁眼3分，刺痛睁眼2分，不睁眼1分。<br/>
+						(2).语言反应：回答切题5分，回答不切题4分，答非所问3分，只能发音2分，不能言语1分。<br/>
+						(3).运动反应：按吩咐动作6分，刺痛能定位5分，刺痛能躲避4分，刺痛后肢体能屈曲3分，刺痛后肢体能过度伸展2分，不能活动1分。
+					</ion-item>
 				</ion-list>
 				<ion-list ng-if="ifbiochemical">
 					<a class="item" style="text-align:center;" href="#" ng-click="clickshowdeviceoption('Biochemical')">
@@ -117,6 +129,7 @@
 	</ion-nav-view>
 </ion-view>
 <style type="text/css">
+	html,body{height:100%}
 	.has-header {
 		top: 0px; 
 	}

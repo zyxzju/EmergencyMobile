@@ -341,7 +341,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
       else {} //$state.go('viewEmergency'); 
     }
     else {
-      if(($scope.curtab!="tab1")&&($scope.curtab!="tab2")){
+      if($scope.curtab!="tab1"){
         $state.go('viewEmergency'); 
       }
     }
@@ -1201,8 +1201,8 @@ angular.module('controllers', ['ionic','ngResource','services'])
 //伤情、处置记录
 //生理参数采集
 ////---------------------伤情记录/处置，生理生化信息录入界面---------马志彬
-.controller('InjuryCtrl', ['$scope','$http','$ionicScrollDelegate','$ionicPlatform','bleService','$rootScope','Patients','$ionicPopup','$ionicHistory', 
-  function ($scope,$http,$ionicScrollDelegate,$ionicPlatform,bleService,$rootScope,Patients,$ionicPopup,$ionicHistory) {
+.controller('InjuryCtrl', ['$scope','$http','$ionicScrollDelegate','$ionicPlatform','bleService','$rootScope','Patients','$ionicPopup','$ionicHistory','VitalSignInfo','EmergencyInfo', 
+  function ($scope,$http,$ionicScrollDelegate,$ionicPlatform,bleService,$rootScope,Patients,$ionicPopup,$ionicHistory,VitalSignInfo,EmergencyInfo) {
   $scope.head = 'HEAD';
 
   //屏幕高度和宽度
@@ -1250,6 +1250,11 @@ angular.module('controllers', ['ionic','ngResource','services'])
     // $scope.itemdetail = $scope.testdata.physiological;
     //////////////////////////
 
+    //获取病人信息
+    var visitNo = window.localStorage['VisitNo'];
+    var Userid = window.localStorage['USERID'];
+    var patientID = window.localStorage['PatientID'];
+
     $scope.selectResult=[];//伤情记录/处置选择结果
     $scope.inputResult=[];//生理生化信息输入结果
     $scope.bindble = '--';//生理ble绑定结果
@@ -1262,20 +1267,49 @@ angular.module('controllers', ['ionic','ngResource','services'])
       {
         $scope.catalog[s[i].Category] = s[i].Item;
       }
+
+      VitalSignInfo.GetVitalSignInfos(patientID,visitNo).then(//获取已有信息
+        function(s){
+          console.log(s);
+          for(var i=0;i<s.length;i++)
+          {
+            $scope.catalog[s[i].ItemCategory][s[i].ItemCode-1].value = s[i].ItemValue;
+          }
+        },
+        function(e){
+          console.log(e);
+        });
+
       $scope.itemdetail = $scope.catalog.Physical;
       console.log($scope.catalog);
     },function(e){
       console.log(e);
     })
     Patients.GetEmergencyDictItems().then(
-     function(s){
-       for(var i=0;i<s.length;i++)
-       {
-         $scope.catalog[s[i].Category] = s[i].Item;
-       }
-       console.log($scope.catalog);
+      function(s){
+         for(var i=0;i<s.length;i++)
+         {
+           $scope.catalog[s[i].Category] = s[i].Item;
+         }
+        EmergencyInfo.GetEmergencyInfos(patientID,visitNo).then(//获取已有信息
+          function(s){
+            console.log(s);
+            for(var i1=0;i1<s.length;i1++)
+            {
+              for(var i2=0;i2<s[i1].Item.length;i2++)
+              {
+                $scope.catalog[s[i1].ItemCategory][s[i1].Item[i2].ItemCode-1].status = true;
+                if(s[i1].Item[i2].ItemName=="其他")
+                  $scope.catalog[s[i1].ItemCategory][s[i1].Item[i2].ItemCode-1].value = s[i1].Item[i2].ItemValue;
+              }
+            }
+          },
+          function(e){
+            console.log(e);
+        });
+        console.log($scope.catalog);
      },function(e){
-       console.log(e);
+        console.log(e);
     })
     $scope.onClickBackward = function(){
       $ionicHistory.goBack();
@@ -1356,26 +1390,8 @@ angular.module('controllers', ['ionic','ngResource','services'])
           //如果选的是其他则把页面滚到底部，方便显示输入框
           $ionicScrollDelegate.$getByHandle('myhand').scrollBottom(true);
         }
-        //
-        if(ci.status==true){//选中了某一项，直接把该项添加到选择结果中
-          var l = $scope.selectResult.push({
-            "ItemCategory": $scope.lastchooseitem,
-            "ItemCode": ci.ItemCode,
-          "ItemValue": ci.ItemName
-        });
-        if(ci.ItemName=='其他')$scope.selectResult[l-1].ItemValue = ci.value;//如果选中的是其他，则把其他中原有的值替换选择结果中该项的值
-        }else{
-          for(var i=0;i<$scope.selectResult.length;i++)//取消选择某项后将该项从选择结果中删除
-          {
-            if(ci.ItemCode==$scope.selectResult[i].ItemCode//只有当ItemCode和ItemCategory都匹配时删除
-              &&$scope.lastchooseitem==$scope.selectResult[i].ItemCategory)
-            {
-              $scope.selectResult.splice(i,1);
-            }
-          }
-        }
+        console.log($scope.itemdetail);
         $scope.catalog[$scope.lastchooseitem]=$scope.itemdetail;
-        console.log($scope.selectResult);
 
       }
       $scope.OnFocus = function(i)//当输入框获得焦点是调用，i-所选输入框的索引
@@ -1395,6 +1411,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
       $scope.doneotherinfo = function(){//完成通用输入框时调用
         $scope.mytext2height = {'height':0+"px"};
         $scope.mytext2textareaheight = {"height":0+"px"};
+        scoring();
       }
 
       $scope.loosecurse = function(){//通用输入框失去焦点时调用
@@ -1403,50 +1420,12 @@ angular.module('controllers', ['ionic','ngResource','services'])
         if($scope.inputindex!=undefined)//undefined表示通用输入框操作的是生理，生化参数输入界面
         {
           $scope.itemdetail[$scope.inputindex].value = $scope.textarea2value;//将通用输入框的值赋给所选输入框
-
-          var hasitem = false;//判断生理生化参数输入结果中是否有当前正在输入的项
-          for(var i=0;i<$scope.inputResult.length;i++){
-            if($scope.inputResult[i].ItemCategory==$scope.lastchooseitem&&
-              $scope.inputResult[i].ItemCode==$scope.itemdetail[$scope.inputindex].ItemCode)
-            {//如果有，判断当前的输入是删除值还是更新值
-              if($scope.textarea2value=='')//输入为空表示要删除
-            {
-              $scope.inputResult.splice(i,1);
-            }
-              else{//输入不为空则更新
-                $scope.inputResult[i].ItemValue=$scope.textarea2value;
-              }
-              hasitem=true;//为true表示有当前正在输入的项
-            }
-          }
-          if(!hasitem)//没有当前正在输入的项时表示一定会增加新的项在数组末尾
-          {
-            if($scope.textarea2value!=''&&$scope.textarea2value!=undefined)//输入不为空则增加
-            {
-              $scope.inputResult.push({
-                "ItemCategory": $scope.lastchooseitem,
-                "ItemCode": $scope.itemdetail[$scope.inputindex].ItemCode,
-              "ItemValue": $scope.textarea2value
-            });
-            }
-          }
         }
         else//表示通用输入框操作的是伤情记录/处置中的某个其他输入框
         {
           $scope.itemdetail.slice(-1)[0].value = $scope.textarea2value;
-          for(var i=0;i<$scope.selectResult.length;i++)
-          {
-            if($scope.selectResult[i].ItemCode==$scope.itemdetail.slice(-1)[0].ItemCode
-              &&$scope.lastchooseitem==$scope.selectResult[i].ItemCategory)
-            {
-              $scope.selectResult[i].ItemValue=$scope.textarea2value;//肯定是选中了这个其他选项，必然要更新结果
-            }
-          }
         }
-        console.log($scope.itemdetail);
-        console.log($scope.catalog);
-        console.log($scope.selectResult);
-        console.log($scope.inputResult);
+        scoring();
       }
       $scope.showdeviceoption_b = false;//控制显示生理/生化中的读取设备按钮详细信息
       $scope.clickshowdeviceoption = function(device){
@@ -1466,9 +1445,6 @@ angular.module('controllers', ['ionic','ngResource','services'])
           $scope.showdeviceoption_b = ~$scope.showdeviceoption_b;
         }
       }
-      var visitNo = window.localStorage['VisitNo'];
-      var Userid = window.localStorage['USERID'];
-      var patientID = window.localStorage['PatientID'];
       var postVitalSigndata = {
         ID:{PatientID:patientID,VisitNo:visitNo},
         postdata:[]
@@ -1479,21 +1455,40 @@ angular.module('controllers', ['ionic','ngResource','services'])
       };
       $scope.saveall = function(){
 
-        postVitalSigndata.postdata = $scope.inputResult;
-        postEmergencydata.postdata = $scope.selectResult;
-
-        for(var i=0;i<postVitalSigndata.postdata.length;i++)
-        {
-          postVitalSigndata.postdata[i]["UserId"] = Userid;
-          postVitalSigndata.postdata[i]["TerminalName"] = "sample string 5";
-          postVitalSigndata.postdata[i]["TerminalIP"] = "sample string 6";
-        }
-        for(var i=0;i<postEmergencydata.postdata.length;i++)
-        {
-          postEmergencydata.postdata[i]["UserId"] = Userid;
-          postEmergencydata.postdata[i]["TerminalName"] = "sample string 5";
-          postEmergencydata.postdata[i]["TerminalIP"] = "sample string 6";
-        }
+        console.log($scope.catalog);
+        postEmergencydata.postdata = [];
+        postVitalSigndata.postdata = [];
+        angular.forEach($scope.catalog,function(value,key){
+          for(var i=0;i<value.length;i++)
+          {
+            if(value[i].status)
+            {
+              console.log(key+value[i].ItemName);
+              var selectResult={};
+              selectResult["ItemCategory"] = key;
+              selectResult["ItemCode"] = value[i].ItemCode;
+              selectResult["ItemValue"] = value[i].ItemName;
+              selectResult["UserId"] = Userid;
+              selectResult["TerminalName"] = "sampleTerminalName";
+              selectResult["TerminalIP"] = "sampleTerminalIP";
+              if(value[i].ItemName=='其他')selectResult["ItemValue"] = value[i].value;
+              postEmergencydata.postdata.push(selectResult);
+            }
+            if(value[i].value!=''&&value[i].value!=undefined&&value[i].ItemName!='其他')
+            {
+              console.log(key+value[i].ItemName);
+              var inputResult={};
+              inputResult["ItemCategory"] = key;
+              inputResult["ItemCode"] = value[i].ItemCode;
+              inputResult["ItemValue"] = value[i].value;
+              inputResult["ItemUnit"] = value[i].ItemUnit;
+              inputResult["UserID"] = Userid;
+              inputResult["TerminalName"] = "sampleTerminalName";
+              inputResult["TerminalIP"] = "sampleTerminalIP";
+              postVitalSigndata.postdata.push(inputResult);
+            }
+          }
+        })
         console.log(postVitalSigndata);
         console.log(postEmergencydata);
         if(postVitalSigndata.postdata.length>0)
@@ -1547,7 +1542,54 @@ angular.module('controllers', ['ionic','ngResource','services'])
       $scope.blescanlist[index].showconnecticon = true;
       console.log($scope.blescanlist);
     }
-
+    $scope.scoring = 0;
+    var scoring = function()
+    {
+      var breathscoring = 0;
+      if($scope.catalog.Physical[2].value==0)
+        breathscoring = 0;
+      else if($scope.catalog.Physical[2].value>=1&&$scope.catalog.Physical[2].value<=5)
+        breathscoring = 1;
+      else if($scope.catalog.Physical[2].value>=6&&$scope.catalog.Physical[2].value<=9)
+        breathscoring = 2;
+      else if($scope.catalog.Physical[2].value>=10&&$scope.catalog.Physical[2].value<=29)
+        breathscoring = 4;
+      else if($scope.catalog.Physical[2].value>29)
+        breathscoring = 3;
+      var bp_hscoring = 0;
+      if($scope.catalog.Physical[3].value<1)
+        bp_hscoring = 0;
+      else if($scope.catalog.Physical[3].value>=1&&$scope.catalog.Physical[3].value<=49)
+        bp_hscoring = 1;
+      else if($scope.catalog.Physical[3].value>=50&&$scope.catalog.Physical[3].value<=75)
+        bp_hscoring = 2;
+      else if($scope.catalog.Physical[3].value>=76&&$scope.catalog.Physical[3].value<=89)
+        bp_hscoring = 3;
+      else if($scope.catalog.Physical[3].value>89)
+        bp_hscoring = 4;
+      var mindscoring = 0;
+      if($scope.catalog.Physical[7].value==3)
+        mindscoring = 0;
+      else if($scope.catalog.Physical[7].value>=4&&$scope.catalog.Physical[7].value<=5)
+        mindscoring = 1;
+      else if($scope.catalog.Physical[7].value>=6&&$scope.catalog.Physical[7].value<=8)
+        mindscoring = 2;
+      else if($scope.catalog.Physical[7].value>=9&&$scope.catalog.Physical[7].value<=12)
+        mindscoring = 3;
+      else if($scope.catalog.Physical[7].value>=13&&$scope.catalog.Physical[7].value<=15)
+        mindscoring = 4;
+      console.log($scope.catalog);
+      console.log(breathscoring);
+      console.log(bp_hscoring);
+      console.log(mindscoring);
+      $scope.scoring = breathscoring+bp_hscoring+mindscoring;
+    }
+    $scope.showdescribe = function() {
+      var showdescribe = $ionicPopup.alert({
+        title: '战伤计分规则!',
+        template: '战伤总积分为呼吸计分+收缩压计分+神志计分的总和'
+      });
+    };
 ////////////////////////for ble
     $ionicPlatform.ready(function(){
     if(ionic.Platform.platform()!='win32')
