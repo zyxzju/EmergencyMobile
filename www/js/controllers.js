@@ -330,12 +330,22 @@ angular.module('controllers', ['ionic','ngResource','services'])
     $scope.refreshList();
   });
 
+  $scope.data = {
+      showDelete: false
+    };
+  $scope.select = function(item) {
+    if(item.itemClass=="ion-ios-checkmark-outline") item.itemClass="ion-ios-checkmark";
+    else item.itemClass="ion-ios-checkmark-outline";
+  }
   //根据状态获取不同列表，并控制显示
   var GetPatientsbyStatus = function(Status)
   {
       var promise = PatientVisitInfo.GetPatientsbyStatus(Status); 
       promise.then(function(data)
       { 
+         for(var i=0;i<data.length;i++){
+          data[i].itemClass="ion-ios-checkmark-outline";
+         }
          $scope.PatientList = data;
          $scope.$broadcast('scroll.refreshComplete'); 
         },function(err) {   
