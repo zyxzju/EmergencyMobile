@@ -16,6 +16,14 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       // from snapping when text inputs are focused. Ionic handles this internally for
       // a much nicer keyboard experience.
       cordova.plugins.Keyboard.disableScroll(true);
+      //监听键盘，键盘出现时计算键盘高度----start
+      window.addEventListener('native.keyboardshow', keyboardShowHandler);
+      function keyboardShowHandler(e){
+        document.body.classList.add('keyboard-open');
+        window.localStorage['keyboardHeight'] = e.keyboardHeight;
+        console.log('Keyboard height is: ' + e.keyboardHeight);
+      }
+      ///////--------------------------------end
     }
     if(window.StatusBar) {
       StatusBar.styleDefault();
@@ -101,10 +109,10 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       cache: false,
       controller:'ViewEmergencyCtrl'
     })
-    .state('vitalSign',{
-      url: '/vitalSign',
-      templateUrl: 'templates/ambulance/vitalSign.html',
-      controller:'VitalSignCtrl'
+    .state('injury',{
+      url: '/injury',
+      templateUrl: 'templates/ambulance/injury.html',
+      controller:'InjuryCtrl'
     })
     .state('ambulance.mine',{
       url: '/mine',
