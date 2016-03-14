@@ -1,0 +1,58 @@
+{
+    "cordova-plugin-ble-central": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\cordova-plugin-ble-central"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-console": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\cordova-plugin-console"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-device": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\cordova-plugin-device"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-splashscreen": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\cordova-plugin-splashscreen"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-statusbar": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\cordova-plugin-statusbar"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "ionic-plugin-keyboard": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\863\\testapps\\appv0.1\\plugins\\ionic-plugin-keyboard"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-whitelist": {
+        "source": {
+            "type": "local",
+            "path": "D:\\work\\bmework\\HealthGuide\\plugins\\cordova-plugin-whitelist"
+        },
+        "is_top_level": true,
+        "variables": {}
+    }
+}
