@@ -32,3 +32,26 @@ angular.module('filters', [])
   	}
   };
 })
+  .filter('itemname', function() {
+    return function(input) {
+      switch(input)
+      {
+        case 'InjuryPart':return '受伤部位';break;
+        case 'InjuryType':return '受伤类型';break;
+        case 'InjuryComplication':return '并发症';break;
+        case 'InjuryExtent':return 'InjuryExtent';break;
+        case 'EmergencySurgery':return '紧急手术';break;
+        case 'InjuryOutLine':return 'InjuryOutLine';break;
+        case 'WarWound':return 'WarWound';break;
+        case 'CarePathway':return 'CarePathway';break;
+        case 'TreatmentOutLine':return '处置概要';break;
+        case 'AntiInfection':return '抗感染';break;
+        case 'AntiShock':return '抗休克';break;
+        case 'InjuryClass':return '受伤类别';break;
+
+        case "Physical":return '生理信息';break;
+        case "Biochemical":return '生化信息';break;
+        default:return input;break;
+      }
+    };
+  })
