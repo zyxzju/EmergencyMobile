@@ -3,10 +3,30 @@
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova'])
+angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordova','filters'])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform, $rootScope, Storage, $state, nfcService, UserInfo) {
   $ionicPlatform.ready(function() {
+    //自动登录
+    var userid=Storage.get('USERID');
+    var passwd=Storage.get('PASSWD');
+    if(userid!=undefined && passwd!=undefined){
+        $ionicLoading.show();
+        UserInfo.LogOn(userid,passwd)
+        .then(function(data){
+          if(data.Result==1){
+            $ionicLoading.hide();
+            Storage.set('RoleCode',data.RoleCode);
+            $state.go('location');
+          }else{
+            $ionicLoading.hide();
+          }
+        },function(err){
+          $ionicLoading.hide();
+        });
+     
+    }
+
     if(window.cordova && window.cordova.plugins.Keyboard) {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
       // for form inputs)
@@ -16,10 +36,27 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       // from snapping when text inputs are focused. Ionic handles this internally for
       // a much nicer keyboard experience.
       cordova.plugins.Keyboard.disableScroll(true);
+      //监听键盘，键盘出现时计算键盘高度----start
+      window.addEventListener('native.keyboardshow', keyboardShowHandler);
+      function keyboardShowHandler(e){
+        document.body.classList.add('keyboard-open');
+        window.localStorage['keyboardHeight'] = e.keyboardHeight;
+        console.log('Keyboard height is: ' + e.keyboardHeight);
+      }
+      ///////--------------------------------end
     }
     if(window.StatusBar) {
       StatusBar.styleDefault();
     }
+
+    // listen for Offline event
+    $rootScope.$on('$cordovaNetwork:offline', function(event, networkState){
+        alert('掉线啦');
+    })
+    $rootScope.eraseCard=false;
+    $rootScope.NFCmodefy=false;
+    Storage.set('UUID',ionic.Platform.device().uuid);
+    Storage.rm('MY_LOCATION');
   });
 })
 
@@ -35,17 +72,16 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       url: '/signIn',
       templateUrl: 'templates/signIn/signIn.html',
       controller: 'SignInCtrl'
-    })   
-    .state('setPassword', {
-      cache:false,
-      url: '/setPassword',
-      templateUrl: 'templates/signIn/setPassword.html',
-      controller: 'SetPasswordCtrl'
     })
     .state('register',{
       url:'/register',
       templateUrl:'templates/signIn/register.html',
       controller:'RegisterCtrl'
+    })
+    .state('location',{
+      url:'/location',
+      templateUrl:'templates/signIn/location.html',
+      controller:'LocationCtrl'
     });
 
   //急救人员与分流人员
@@ -61,76 +97,68 @@ angular.module('EmergencyMobile', ['ionic', 'services', 'controllers', 'ngCordov
       views:{
         'ambulance':{
         templateUrl: 'templates/ambulance/list.html',
-        // controller:'ambulancePatientCtrl'
+        controller:'AmbulanceListCtrl'
         }
       }
-    })
-    // .state('ambulance.newPatient',{
-    //   url: '/newPatient',
-    //   views:{
-    //     'ambulance':{
-    //     templateUrl: 'templates/ambulance/newPatient.html',
-    //     // controller:'ambulancePatientCtrl'
-    //     }
-    //   }
-    // })
-        
+    })  
     .state('newPatient',{
       url: '/newPatient',
-        templateUrl: 'templates/ambulance/newPatient.html',
-        controller:'NewPatientCtrl'
+      templateUrl: 'templates/ambulance/newPatient.html',
+      cache: false,
+      controller:'NewPatientCtrl'
+    })
+    .state('patientInfo',{
+      url: '/patientInfo',
+      templateUrl: 'templates/ambulance/patientInfo.html',
+      cache: false,
+      controller:'PatientInfoCtrl'
+    })
+    .state('newVisit',{
+      url: '/newVisit',
+      templateUrl: 'templates/ambulance/newVisit.html',
+      cache: false,
+      controller:'NewVisitCtrl'
+    })
+    .state('visitInfo',{
+      url: '/visitInfo',
+      templateUrl: 'templates/ambulance/visitInfo.html',
+      cache: false,
+      controller:'VisitInfoCtrl'
+    })
+    .state('viewEmergency',{
+      url: '/viewEmergency',
+      templateUrl: 'templates/ambulance/viewEmergency.html',
+      cache: false,
+      controller:'ViewEmergencyCtrl'
     })
     .state('injury',{
       url: '/injury',
       templateUrl: 'templates/ambulance/injury.html',
       controller:'InjuryCtrl'
     })
-    .state('vitalSign',{
-      url: '/vitalSign',
-      templateUrl: 'templates/ambulance/vitalSign.html',
-      controller:'VitalSignCtrl'
-    })
-    .state('treatment',{
-      url: '/treatment',
-      templateUrl: 'templates/ambulance/treatment.html',
-      controller:'TreatmentCtrl'
-    })
-    .state('evacuation',{
-      url: '/evacuation',
-      templateUrl: 'templates/ambulance/evacuation.html',
-      controller:'EvacuationCtrl'
-    })
-    //分流人员
-    .state('ambulance.list1',{
-      url: '/list1',
-      views:{
-        'ambulance':{
-        templateUrl: 'templates/ambulance/list1.html',
-        // controller:'ambulancePatientCtrl'
-        }
-      }
-    })
-    .state('visitInfo',{
-      url: '/visitInfo',
-      templateUrl: 'templates/ambulance/visitInfo.html',
-      controller:'VisitInfoCtrl'
-    })
-    .state('triage',{
-      url: '/triage',
-      templateUrl: 'templates/ambulance/triage.html',
-      controller:'TriageCtrl'
-    })
     .state('ambulance.mine',{
       url: '/mine',
       views:{
        'mine':{
           templateUrl: 'templates/mine/setting.html',
-          // controller:'ambulancePatientCtrl'
+          controller:'SettingCtrl'
         }
       }
+    })
+    .state('myProfile',{
+      cache:false,
+      url: '/myprofile',
+      templateUrl: 'templates/mine/myProfile.html',
+      controller:'myProfileCtrl'
+    })   
+    .state('setPassword', {
+      cache:false,
+      url: '/setPassword',
+      templateUrl: 'templates/signIn/setPassword.html',
+      controller: 'SetPasswordCtrl'    
     });
 
     //起始页
-    $urlRouterProvider.otherwise('/ambulance/list');
+    $urlRouterProvider.otherwise('/signIn');
   }])
 
