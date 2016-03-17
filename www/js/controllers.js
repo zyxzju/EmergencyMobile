@@ -1268,7 +1268,7 @@ $scope.BasicInfo={"InjuryDateTime": new Date(Common.DateTimeNow().fullTime)};
           onTap: function(){
 
           // 插入病人分诊信息
-          var promise = PatientVisitInfo.UpdateTriage( Storage.get("PatientID"), Storage.get("VisitNo"), "4", $scope.TriageDate.TriageDateTime, $scope.TriageDate.TriageToDept);
+          var promise = PatientVisitInfo.UpdateTriage( Storage.get("PatientID"), Storage.get("VisitNo"), "4", $scope.TriageDate.TriageDateTime, '1|'+$scope.TriageDate.TriageToDept+'|0');
           promise.then(function(data){
             if(data.result=="数据插入成功"){
               $ionicLoading.show({
