@@ -798,9 +798,131 @@ return{
     };
 })
 
+
 //后送
-.factory('Evacation', function ($rootScope, $ionicPlatform,$ionicPopup,$ionicLoading,$state,Storage) {
+.factory('Evacation', function ($rootScope, $ionicPlatform,$ionicPopup,$ionicLoading,$state,Storage,PatientVisitInfo,MstEva,Common,MstType) {
+   
   
+   
+   function getPopup(scope) {
+ 
+     //后送选项加载
+   //后送方式
+   var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
+   promise_EvaTransportation.then(function(data)
+   { 
+      scope.EvaTransportations = data;
+      },function(err) {   
+   });      
+
+   //默认后送批次
+   var promise_EVABatchNos = MstEva.GetDataByEVATransportation('1');
+    promise_EVABatchNos.then(function(data)
+       { 
+         scope.EVABatchNos = data;
+         //$scope.evacuationInfo.EvaBatchNo="B01";
+        },function(err) {   
+    }); 
+  
+    scope.changeEVABatchNos=function(item){
+      var promise_EVABatchNos = MstEva.GetDataByEVATransportation(item);
+      promise_EVABatchNos.then(function(data)
+         { 
+           scope.EVABatchNos = data;
+          scope.evacuationInfo.EvaBatchNo=data[0].EVANO;
+          },function(err) {   
+      }); 
+    }      
+
+  //后送体位
+   var promise_EvaPosition = MstType.GetMstType('EvaPosition');
+   promise_EvaPosition.then(function(data)
+   { 
+      scope.EvaPositions = data;
+     },function(err) {   
+   });      
+
+   //后送地点 必须
+   var promise = MstType.GetMstType('EvaDestination');
+   promise.then(function(data)
+   { 
+     scope.EvaDestinations = data;
+    },function(err) {   
+  });      
+     var visitNo = window.localStorage['VisitNo'];
+    console.log(visitNo);
+    scope.evacuationInfo={"EvaDateTime": new Date(Common.DateTimeNow().fullTime), "EvaBatchNo":"33", "EvaDestination":"",  "EvaTransportation":"",  "EvaPosition":""};
+  
+    scope.testfun = function(){
+      console.log(scope.evacuationInfo);
+    }
+       var Evacuation= function(scope)
+     {
+        console.log(scope.evacuationInfo);
+        var sendData={
+          "PatientID": Storage.get("PatientID"),
+          "VisitNo": Storage.get("VisitNo"),
+          "Status": "2",
+          "EvaDateTime": scope.evacuationInfo.EvaDateTime,
+          //"EvaDateTime": "20160316 11:03:46",
+          "EvaBatchNo": scope.evacuationInfo.EvaBatchNo,
+          "EvaDestination": scope.evacuationInfo.EvaDestination,
+          "EvaTransportation": scope.evacuationInfo.EvaTransportation,
+          "EvaPosition": scope.evacuationInfo.EvaPosition,
+          "UserID": "",
+          "TerminalName": "",
+          "TerminalIP": ""
+        }
+       var promise =  PatientVisitInfo.UpdateEva(sendData); 
+       promise.then(function(data){ 
+          if(data.result=="数据插入成功"){
+            $ionicLoading.show({
+              template: "后送完成！",
+              noBackdrop: false,
+              duration: 1000,
+              hideOnStateChange: true
+            });
+            setTimeout(function(){
+              $state.go('ambulance.list'); //回主页
+            },600);
+          }
+         },function(err) {   
+       }); 
+     console.log(12);
+      } 
+if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!='')){
+     return $ionicPopup.show({
+               
+               templateUrl: 'templates/ambulance/evacuation.html',
+               title: '后送操作',
+               scope: scope,
+               buttons: [
+                  {text: '确定',
+                   type: 'button-assertive',
+                 　onTap: function(e) {
+                    Evacuation(scope);
+        　　　　    }
+                   },{
+                   text: '取消',
+                   type: 'button-positive',
+               }]
+           });     
+     }
+     else
+      {
+       return $ionicLoading.show({
+           template: '请先保存就诊记录',
+           noBackdrop: false,
+           duration: 1000,
+           hideOnStateChange: true
+        });
+
+      }
+      }
+      
+   return {
+       getPopup: getPopup
+   };    
 })
 //分诊
 ;

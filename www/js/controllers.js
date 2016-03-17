@@ -490,7 +490,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 }])
 
 //新建PID
-.controller('NewPatientCtrl', ['$scope', '$ionicHistory' ,'PatientInfo','MstType','$ionicLoading','$ionicPopup','Storage','$state', function ($scope, $ionicHistory,PatientInfo,MstType,$ionicLoading,$ionicPopup,Storage,$state) {
+.controller('NewPatientCtrl', ['$scope', '$ionicHistory' ,'PatientInfo','MstType','$ionicLoading','$ionicPopup','Storage','$state','Common', function ($scope, $ionicHistory,PatientInfo,MstType,$ionicLoading,$ionicPopup,Storage,$state,Common) {
 
   $scope.goBack = function() {
     $ionicHistory.goBack();
@@ -580,15 +580,69 @@ angular.module('controllers', ['ionic','ngResource','services'])
       }); 
     } //else end
   }  
-
+   var  jsGetAge=function(strBirthday)
+    {       
+        $scope.BasicInfo.Age;
+        var strBirthdayArr=strBirthday;
+        var birthYear = strBirthday.getFullYear();
+        var birthMonth = strBirthday.getMonth()+1;
+        var birthDay = strBirthday.getDate();
+      
+        d = new Date();
+        var nowYear = d.getFullYear();
+        var nowMonth = d.getMonth() + 1;
+        var nowDay = d.getDate();
+    
+        if(nowYear == birthYear)
+        {
+            $scope.BasicInfo.Age = 0;//同年 则为0岁
+        }
+        else
+        {
+            var ageDiff = nowYear - birthYear ; //年之差
+            if(ageDiff > 0)
+            {
+                if(nowMonth == birthMonth)
+                {
+                    var dayDiff = nowDay - birthDay;//日之差
+                    if(dayDiff < 0)
+                    {
+                        $scope.BasicInfo.Age = ageDiff - 1;
+                    }
+                    else
+                    {
+                        $scope.BasicInfo.Age = ageDiff ;
+                    }
+                }
+                else
+                {
+                    var monthDiff = nowMonth - birthMonth;//月之差
+                    if(monthDiff < 0)
+                    {
+                        $scope.BasicInfo.Age = ageDiff - 1;
+                    }
+                    else
+                    {
+                        $scope.BasicInfo.Age = ageDiff ;
+                    }
+                }
+            }
+            else
+            {
+                $scope.BasicInfo.Age = -1;//返回-1 表示出生日期输入错误 晚于今天
+            }
+        }
+        return $scope.BasicInfo.Age;//返回周岁年龄 
+    }
    $scope.BasicInfo={}; //提交的容器初始化
    //患者基本信息插入
+$scope.BasicInfo={"InjuryDateTime": new Date(Common.DateTimeNow().fullTime)};
    var setPatientInfo = function() {
       var sendData = {
           "PatientID": $scope.NewPatientID.PatientID,
           "PatientName": $scope.BasicInfo.PatientName,
           "Gender":  $scope.BasicInfo.Gender,
-          "Age": $scope.BasicInfo.Age,
+          "Age": jsGetAge($scope.BasicInfo.DOB),
           "DOB": $scope.BasicInfo.DOB,
           "BloodType": $scope.BasicInfo.BloodType,
           "Allergy": $scope.BasicInfo.Allergy,
@@ -600,6 +654,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
           'TerminalName':"",
           "TerminalIP": ""
         }
+        console.log($scope.BasicInfo.DOB);
       var promise =  PatientInfo.SetPatientInfo(sendData);
       promise.then(function(data){ 
             if(data.result=="数据插入成功"){
@@ -626,7 +681,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 }])
 
 //新建VID
-.controller('NewVisitCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo', 'Common', 'MstEva','$state' ,function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo, Common, MstEva, $state) {
+.controller('NewVisitCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo', 'Common', 'MstEva','$state' ,'Evacation',function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo, Common, MstEva, $state,Evacation) {
 
   //写入信息
   $scope.wirteToCard = function(){
@@ -689,7 +744,6 @@ angular.module('controllers', ['ionic','ngResource','services'])
   }); 
 
   $scope.visitInfo={"InjuryArea": "", "InjuryDateTime": new Date(Common.DateTimeNow().fullTime), "VisitDateTime": new Date(Common.DateTimeNow().fullTime)};
-
   //保存
   $scope.saveVisitInfo = function() {
     var sendData = {
@@ -738,120 +792,126 @@ angular.module('controllers', ['ionic','ngResource','services'])
               });  
   };
      
-  //后送选择框         
-    $scope.showreservePop = function() {
-      $scope.saveVisitInfo();
-      if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!=''))
-      {
-            var myPopup = $ionicPopup.show({
-               templateUrl: 'templates/ambulance/evacuation.html',
-               title: '后送操作',
-               scope: $scope,
-               buttons: [
-                  {text: '确定',
-                   type: 'button-assertive',
-                 　onTap: function(e) {
-                      Evacuation();
-        　　　　    }
-                   },{
-                   text: '取消',
-                   type: 'button-positive',
-               }]
-           });
+  // //后送选择框         
+  //   $scope.showreservePop = function() {
+  //     $scope.saveVisitInfo();
+  //     if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!=''))
+  //     {
+  //           var myPopup = $ionicPopup.show({
+  //              templateUrl: 'templates/ambulance/evacuation.html',
+  //              title: '后送操作',
+  //              scope: $scope,
+  //              buttons: [
+  //                 {text: '确定',
+  //                  type: 'button-assertive',
+  //                　onTap: function(e) {
+  //                     Evacuation();
+  //       　　　　    }
+  //                  },{
+  //                  text: '取消',
+  //                  type: 'button-positive',
+  //              }]
+  //          });
 
-      }
-      else
-      {
-        $ionicLoading.show({
-           template: '请先保存就诊记录',
-           noBackdrop: false,
-           duration: 1000,
-           hideOnStateChange: true
-        });
+  //     }
+  //     else
+  //     {
+  //       $ionicLoading.show({
+  //          template: '请先保存就诊记录',
+  //          noBackdrop: false,
+  //          duration: 1000,
+  //          hideOnStateChange: true
+  //       });
 
-      }
-   }
+  //     }
+  //  }
 
-      //后送操作
-     $scope.evacuationInfo={"EvaDateTime": new Date(Common.DateTimeNow().fullTime), "EvaBatchNo":"B01", "EvaDestination":"1",  "EvaTransportation":"1",  "EvaPosition":"1"};
-     var Evacuation= function()
-     {
+  //     //后送操作
+  //    $scope.evacuationInfo={"EvaDateTime": new Date(Common.DateTimeNow().fullTime), "EvaBatchNo":"B01", "EvaDestination":"1",  "EvaTransportation":"1",  "EvaPosition":"1"};
+  //    var Evacuation= function()
+  //    {
 
-        var sendData={
-          "PatientID": Storage.get("PatientID"),
-          "VisitNo": Storage.get("VisitNo"),
-          "Status": "2",
-          "EvaDateTime": $scope.evacuationInfo.EvaDateTime,
-          "EvaBatchNo": $scope.evacuationInfo.EvaBatchNo,
-          "EvaDestination": $scope.evacuationInfo.EvaDestination,
-          "EvaTransportation": $scope.evacuationInfo.EvaTransportation,
-          "EvaPosition": $scope.evacuationInfo.EvaPosition,
-          "UserID": "",
-          "TerminalName": "",
-          "TerminalIP": ""
-        }
-       var promise =  PatientVisitInfo.UpdateEva(sendData); 
-       promise.then(function(data){ 
-          if(data.result=="数据插入成功"){
-            $ionicLoading.show({
-              template: "后送完成！",
-              noBackdrop: false,
-              duration: 1000,
-              hideOnStateChange: true
-            });
-            setTimeout(function(){
-              $state.go('ambulance.list'); //回主页
-            },600);
-          }
-         },function(err) {   
-       }); 
-     } 
+  //       var sendData={
+  //         "PatientID": Storage.get("PatientID"),
+  //         "VisitNo": Storage.get("VisitNo"),
+  //         "Status": "2",
+  //         "EvaDateTime": $scope.evacuationInfo.EvaDateTime,
+  //         "EvaBatchNo": $scope.evacuationInfo.EvaBatchNo,
+  //         "EvaDestination": $scope.evacuationInfo.EvaDestination,
+  //         "EvaTransportation": $scope.evacuationInfo.EvaTransportation,
+  //         "EvaPosition": $scope.evacuationInfo.EvaPosition,
+  //         "UserID": "",
+  //         "TerminalName": "",
+  //         "TerminalIP": ""
+  //       }
+  //      var promise =  PatientVisitInfo.UpdateEva(sendData); 
+  //      promise.then(function(data){ 
+  //         if(data.result=="数据插入成功"){
+  //           $ionicLoading.show({
+  //             template: "后送完成！",
+  //             noBackdrop: false,
+  //             duration: 1000,
+  //             hideOnStateChange: true
+  //           });
+  //           setTimeout(function(){
+  //             $state.go('ambulance.list'); //回主页
+  //           },600);
+  //         }
+  //        },function(err) {   
+  //      }); 
+  //    } 
      
 
-     //后送选项加载
-     //后送方式
-     var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
-     promise_EvaTransportation.then(function(data)
-     { 
-        $scope.EvaTransportations = data;
-        },function(err) {   
-     });      
+  //    //后送选项加载
+  //    //后送方式
+  //    var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
+  //    promise_EvaTransportation.then(function(data)
+  //    { 
+  //       $scope.EvaTransportations = data;
+  //       },function(err) {   
+  //    });      
 
-     //默认后送批次
-     var promise_EVABatchNos = MstEva.GetDataByEVATransportation('1');
-      promise_EVABatchNos.then(function(data)
-         { 
-           $scope.EVABatchNos = data;
-           //$scope.evacuationInfo.EvaBatchNo="B01";
-          },function(err) {   
-      }); 
+  //    //默认后送批次
+  //    var promise_EVABatchNos = MstEva.GetDataByEVATransportation('1');
+  //     promise_EVABatchNos.then(function(data)
+  //        { 
+  //          $scope.EVABatchNos = data;
+  //          //$scope.evacuationInfo.EvaBatchNo="B01";
+  //         },function(err) {   
+  //     }); 
     
-      $scope.changeEVABatchNos=function(item){
-        var promise_EVABatchNos = MstEva.GetDataByEVATransportation(item);
-        promise_EVABatchNos.then(function(data)
-           { 
-             $scope.EVABatchNos = data;
-             $scope.evacuationInfo.EvaBatchNo=data[0].EVANO;
-            },function(err) {   
-        }); 
-      }
+      // $scope.changeEVABatchNos=function(item){
+      //   var promise_EVABatchNos = MstEva.GetDataByEVATransportation(item);
+      //   promise_EVABatchNos.then(function(data)
+      //      { 
+      //        $scope.EVABatchNos = data;
+      //        $scope.evacuationInfo.EvaBatchNo=data[0].EVANO;
+      //       },function(err) {   
+      //   }); 
+      // }
 
 
-    //后送体位
-     var promise_EvaPosition = MstType.GetMstType('EvaPosition');
-     promise_EvaPosition.then(function(data)
-     { 
-        $scope.EvaPositions = data;
-       },function(err) {   
-     });      
+  //   //后送体位
+  //    var promise_EvaPosition = MstType.GetMstType('EvaPosition');
+  //    promise_EvaPosition.then(function(data)
+  //    { 
+  //       $scope.EvaPositions = data;
+  //      },function(err) {   
+  //    });      
 
-     //后送地点 必须
-     var promise = MstType.GetMstType('EvaDestination');
-     promise.then(function(data)
-     { 
-       $scope.EvaDestinations = data;
-      },function(err) {   
-    });      
+  //    //后送地点 必须
+  //    var promise = MstType.GetMstType('EvaDestination');
+  //    promise.then(function(data)
+  //    { 
+  //      $scope.EvaDestinations = data;
+  //     },function(err) {   
+  //   });      
+    $scope.showreservePop = function() {
+     var myPopup = Evacation.getPopup($scope);
+     myPopup.then(function(res) {
+     console.log('haha',res);
+   });
+  };
 
 }])
 
@@ -909,6 +969,60 @@ angular.module('controllers', ['ionic','ngResource','services'])
   GetDefault(); //加载页面默认参数     
   
   $scope.BasicInfo={};
+  var  jsGetAge=function(strBirthday)
+    {       
+        $scope.BasicInfo.Age;
+        var strBirthdayArr=strBirthday;
+        var birthYear = strBirthday.getFullYear();
+        var birthMonth = strBirthday.getMonth()+1;
+        var birthDay = strBirthday.getDate();
+    
+        d = new Date();
+        var nowYear = d.getFullYear();
+        var nowMonth = d.getMonth() + 1;
+        var nowDay = d.getDate();
+    
+        if(nowYear == birthYear)
+        {
+            $scope.BasicInfo.Age = 0;//同年 则为0岁
+        }
+        else
+        {
+            var ageDiff = nowYear - birthYear ; //年之差
+            if(ageDiff > 0)
+            {
+                if(nowMonth == birthMonth)
+                {
+                    var dayDiff = nowDay - birthDay;//日之差
+                    if(dayDiff < 0)
+                    {
+                        $scope.BasicInfo.Age = ageDiff - 1;
+                    }
+                    else
+                    {
+                        $scope.BasicInfo.Age = ageDiff ;
+                    }
+                }
+                else
+                {
+                    var monthDiff = nowMonth - birthMonth;//月之差
+                    if(monthDiff < 0)
+                    {
+                        $scope.BasicInfo.Age = ageDiff - 1;
+                    }
+                    else
+                    {
+                        $scope.BasicInfo.Age = ageDiff ;
+                    }
+                }
+            }
+            else
+            {
+                $scope.BasicInfo.Age = -1;//返回-1 表示出生日期输入错误 晚于今天
+            }
+        }
+        return $scope.BasicInfo.Age;//返回周岁年龄 
+    }
   //获取已经保存的信息并展示
   var promise_PatientInfo = PatientInfo.GetPsPatientInfo(Storage.get("PatientID")); 
   promise_PatientInfo.then(function(data)
@@ -931,7 +1045,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
                 "PatientID": Storage.get("PatientID"),
                 "PatientName": $scope.BasicInfo.PatientName,
                 "Gender":  $scope.BasicInfo.Gender,
-                "Age": $scope.BasicInfo.Age,
+                "Age": jsGetAge($scope.BasicInfo.DOB),
                 "DOB": $scope.BasicInfo.DOB,
                 "BloodType": $scope.BasicInfo.BloodType,
                 "Allergy": $scope.BasicInfo.Allergy,
@@ -973,7 +1087,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
 }])
 
 //查看或编辑病人就诊记录
-.controller('VisitInfoCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo','Common', '$state', 'MstEva', function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo, Common, $state, MstEva) {
+.controller('VisitInfoCtrl', ['$scope', '$ionicHistory', '$http','$ionicPopup' ,'PatientVisitInfo', '$ionicLoading','MstType','Storage','PatientInfo','Common', '$state', 'MstEva','Evacation', function ($scope, $ionicHistory,$http,$ionicPopup,PatientVisitInfo, $ionicLoading,MstType,Storage, PatientInfo, Common, $state, MstEva,Evacation) {
 
   $scope.goBack = function() {
     $ionicHistory.goBack();
@@ -1013,7 +1127,7 @@ angular.module('controllers', ['ionic','ngResource','services'])
       GetPatientVisitInfo(Storage.get("PatientID"), Storage.get("VisitNo"));
   }); 
 
-  //$scope.visitInfo={"InjuryArea": "", "InjuryDateTime": new Date(), "VisitDateTime": new Date()};
+  $scope.visitInfo={"InjuryArea": "", "InjuryDateTime": new Date(), "VisitDateTime": new Date()};
   //保存确认框
   $scope.showConfirm = function() {
     $scope.confirmPopup = $ionicPopup.confirm({
@@ -1082,118 +1196,13 @@ angular.module('controllers', ['ionic','ngResource','services'])
                    }); 
               });  
   };
-
-  //后送确认框         
   $scope.showreservePop = function() {
-      if( (Storage.get("VisitNo")!='') && (Storage.get("PatientID")!=''))
-      {
-            var myPopup = $ionicPopup.show({
-               templateUrl: 'templates/ambulance/evacuation.html',
-               title: '后送操作',
-               scope: $scope,
-               buttons: [
-                  {text: '确定',
-                   type: 'button-assertive',
-                 　onTap: function(e) {
-                      Evacuation();
-        　　　　    }
-                   },{
-                   text: '取消',
-                   type: 'button-positive',
-               }]
-           });
-
-      }
-      else
-      {
-        $ionicLoading.show({
-           template: '请先保存就诊记录',
-           noBackdrop: false,
-           duration: 1000,
-           hideOnStateChange: true
-        });
-
-      }
-  }
-
-    //后送操作
-  $scope.evacuationInfo={"EvaDateTime": new Date(Common.DateTimeNow().fullTime), "EvaBatchNo":"B01", "EvaDestination":"1",  "EvaTransportation":"1",  "EvaPosition":"1"};
-     var Evacuation= function()
-     {
-        var sendData={
-          "PatientID": Storage.get("PatientID"),
-          "VisitNo": Storage.get("VisitNo"),
-          "Status": "2",
-          "EvaDateTime": $scope.evacuationInfo.EvaDateTime,
-          "EvaBatchNo": $scope.evacuationInfo.EvaBatchNo,
-          "EvaDestination": $scope.evacuationInfo.EvaDestination,
-          "EvaTransportation": $scope.evacuationInfo.EvaTransportation,
-          "EvaPosition": $scope.evacuationInfo.EvaPosition,
-          "UserID": "",
-          "TerminalName": "",
-          "TerminalIP": ""
-        }
-     var promise =  PatientVisitInfo.UpdateEva(sendData); 
-     promise.then(function(data){ 
-        if(data.result=="数据插入成功"){
-          $ionicLoading.show({
-            template: "后送完成！",
-            noBackdrop: false,
-            duration: 1000,
-            hideOnStateChange: true
-          });
-          setTimeout(function(){
-            //$state.go('ambulance.list'); //回主页
-          },600);
-        }
-       },function(err) {   
-     }); 
-   } //Evacuation  function end
-     
-
-   //后送选项加载
-   //后送方式
-   var promise_EvaTransportation= MstType.GetMstType('EvaTransportation');
-   promise_EvaTransportation.then(function(data)
-   { 
-      $scope.EvaTransportations = data;
-      },function(err) {   
-   });      
-
-   //默认后送批次
-   var promise_EVABatchNos = MstEva.GetDataByEVATransportation('1');
-    promise_EVABatchNos.then(function(data)
-       { 
-         $scope.EVABatchNos = data;
-         //$scope.evacuationInfo.EvaBatchNo="B01";
-        },function(err) {   
-    }); 
+     var myPopup = Evacation.getPopup($scope);
+     myPopup.then(function(res) {
+     console.log('haha',res);
+   });
+  };
   
-    $scope.changeEVABatchNos=function(item){
-      var promise_EVABatchNos = MstEva.GetDataByEVATransportation(item);
-      promise_EVABatchNos.then(function(data)
-         { 
-           $scope.EVABatchNos = data;
-          $scope.evacuationInfo.EvaBatchNo=data[0].EVANO;
-          },function(err) {   
-      }); 
-    }      
-
-  //后送体位
-   var promise_EvaPosition = MstType.GetMstType('EvaPosition');
-   promise_EvaPosition.then(function(data)
-   { 
-      $scope.EvaPositions = data;
-     },function(err) {   
-   });      
-
-   //后送地点 必须
-   var promise = MstType.GetMstType('EvaDestination');
-   promise.then(function(data)
-   { 
-     $scope.EvaDestinations = data;
-    },function(err) {   
-  });      
 
 }])
 
